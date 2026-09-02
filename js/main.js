@@ -23,15 +23,14 @@
     });
   }
 
-  // Scroll-spy: highlight the current section's nav link with a real state,
-  // not an unstyled default.
+  // Scroll-spy: highlight the current section's nav link with a real state
+  // (an underline that grows in), not an unstyled default.
   var sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
   var navLinks = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
 
   function setActive(id) {
     navLinks.forEach(function (link) {
-      var match = link.getAttribute("href") === "#" + id;
-      link.classList.toggle("is-active", match);
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
     });
   }
 
@@ -47,17 +46,23 @@
     sections.forEach(function (section) { spy.observe(section); });
   }
 
-  // Reveal-on-scroll: one fade + rise, no bounce, respects reduced motion.
+  // Reveal-on-scroll: the page renders fully visible at rest. Only elements
+  // that start below the first viewport get a "pending" state to animate
+  // in from, so nothing is ever hidden waiting on JS at first paint.
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
 
-  if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-    revealEls.forEach(function (el) { el.classList.add("is-visible"); });
-  } else {
+  if (!prefersReducedMotion && "IntersectionObserver" in window) {
+    var vh = window.innerHeight;
+    revealEls.forEach(function (el) {
+      if (el.getBoundingClientRect().top > vh * 0.9) el.classList.add("pending");
+    });
+
     var revealObserver = new IntersectionObserver(
       function (entries, obs) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
+            entry.target.classList.remove("pending");
             entry.target.classList.add("is-visible");
             obs.unobserve(entry.target);
           }
