@@ -154,7 +154,7 @@ section { padding-block: var(--sp-9); position: relative; }
   margin-bottom: var(--sp-4);
 }
 
-.eyebrow::before { content: ""; width: 16px; height: 1px; background: var(--accent); flex: none; }
+.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
 
 .lead { font-size: var(--size-lead); line-height: var(--lh-snug); color: var(--ink-soft); max-width: 58ch; }
 
@@ -373,46 +373,29 @@ section { padding-block: var(--sp-9); position: relative; }
    ========================================================================== */
 
 /* ==========================================================================
-   Layered scroll stacking. Each major section is pinned at the top of the
-   viewport (position: sticky) with its own opaque background and a rising
-   z-index, so the next section physically slides up and over the one
-   before it instead of the page just cutting from block to block. Pure
-   CSS - no scroll-linked JS needed for the stacking itself. A soft shadow
-   along each section's top edge sells the "this is a layer" read while
-   it's mid-slide.
+   Paged scrolling. Each major section is a scroll-snap point that settles
+   cleanly into full view - scrolling reads as moving between distinct
+   pages rather than one continuous, indeterminate scroll. Native CSS
+   scroll-snap (no JS, no per-frame scroll math), so it stays smooth and
+   never fights or lags behind the user's own scroll input. "proximity"
+   (not "mandatory") so a fast flick can still sail past a page instead of
+   forcing a stop at every single one.
    ========================================================================== */
 
+html { scroll-snap-type: y proximity; }
+
 main section[id] {
-  position: sticky;
-  top: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
 }
 
-main section[id]::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 40px;
-  background: linear-gradient(rgba(0, 0, 0, 0.22), transparent);
-  pointer-events: none;
-  z-index: 1;
-}
-
-#top { z-index: 1; }
-.gap-section { z-index: 2; }
-#programs { z-index: 3; background: var(--bg); }
-#founders { z-index: 4; background: var(--bg-raised); }
-.involve { z-index: 5; }
-
-.site-footer {
-  position: relative;
-  z-index: 6;
-  background: var(--bg-raised);
-}
+#programs { background: var(--bg); }
+#founders { background: var(--bg-raised); }
 
 @media (prefers-reduced-motion: reduce) {
-  /* The stacking read depends on motion to make sense; without it, plain
-     stacked blocks in normal flow are the more legible, safer choice. */
-  main section[id] { position: relative; }
+  /* Snapping is itself a scroll behavior some people find disorienting;
+     free, ordinary scrolling is the safer default here. */
+  html { scroll-snap-type: none; }
 }
 
 .hero {
@@ -436,26 +419,6 @@ main section[id]::before {
 
 .hero-glow-1 { background: radial-gradient(1200px 640px at 12% -12%, rgba(79, 195, 255, 0.32), transparent 60%); }
 .hero-glow-2 { background: radial-gradient(900px 560px at 92% 6%, rgba(47, 163, 230, 0.18), transparent 55%); }
-
-/* Cursor-follow glow — a small, soft, mouse-driven light. Pointer-fine only. */
-.cursor-glow {
-  position: absolute;
-  width: 420px;
-  height: 420px;
-  margin-left: -210px;
-  margin-top: -210px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(159, 230, 255, 0.16), transparent 70%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 400ms var(--ease);
-  z-index: 0;
-  will-change: transform;
-}
-
-.hero:hover .cursor-glow { opacity: 1; }
-
-@media (pointer: coarse) { .cursor-glow { display: none; } }
 
 .hero-inner { position: relative; z-index: 1; max-width: 1040px; margin-inline: auto; }
 
@@ -727,7 +690,30 @@ main section[id]::before {
   font-family: var(--font-display);
   font-size: 1.15rem;
   flex: none;
+  position: relative;
+  overflow: visible;
 }
+
+/* Same slot, once real photos are in: swap the initials div for
+   <img class="monogram founder-photo" src="..."> and this covers it. */
+.monogram.founder-photo {
+  overflow: hidden;
+  object-fit: cover;
+}
+
+.monogram-sparkle {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  fill: var(--accent);
+  opacity: 0;
+  transform: scale(0.4) rotate(-15deg);
+  transition: opacity 260ms var(--ease-bounce), transform 260ms var(--ease-bounce);
+}
+
+.founder-card:hover .monogram-sparkle { opacity: 1; transform: scale(1) rotate(0deg); }
 
 .founder-role {
   font-size: 0.72rem;
@@ -985,25 +971,6 @@ main section[id]::before {
 
 .sound-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .sound-toggle[aria-pressed="true"] .sound-wave { opacity: 1; }
-
-/* A joke button that is, as promised, extremely low stakes. Warm red is a
-   deliberate one-off exception to the blue palette here - it's the one
-   place "don't touch this" benefits from reading as a universal warning
-   color rather than matching the brand. */
-.dnp-btn {
-  padding: 0.6em 1.1em;
-  border-radius: var(--radius-pill);
-  border: 1.5px dashed rgba(255, 120, 120, 0.45);
-  background: rgba(255, 90, 90, 0.06);
-  color: rgb(255, 158, 158);
-  font-size: 0.78rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  transition: transform 260ms var(--ease-bounce), background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-
-.dnp-btn:hover { background: rgba(255, 90, 90, 0.12); border-color: rgba(255, 120, 120, 0.7); transform: scale(1.04) rotate(-1deg); }
-.dnp-btn:active { transform: scale(0.96) rotate(0deg); }
 
 /* ==========================================================================
    Entrepreneurial Energy gauge - a purely decorative dial that fills with

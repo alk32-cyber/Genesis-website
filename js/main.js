@@ -187,6 +187,9 @@
       if (stageIndex !== lastEnergyStage) {
         lastEnergyStage = stageIndex;
         if (energyStage) energyStage.textContent = ENERGY_STAGES[stageIndex];
+        if (stageIndex === ENERGY_STAGES.length - 1) {
+          showToast("You made it to the end. That's more attention than most pitch decks get.");
+        }
       }
     }
 
@@ -227,17 +230,6 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onScroll, { passive: true });
   updateScrollDerived();
-
-  // Cursor-follow glow in the hero - mouse-driven, not scroll-driven, so it
-  // stays a separate lightweight listener.
-  var cursorGlow = document.getElementById("cursorGlow");
-  if (hero && hasFinePointer && cursorGlow && !prefersReducedMotion) {
-    hero.addEventListener("mousemove", function (e) {
-      var rect = hero.getBoundingClientRect();
-      cursorGlow.style.transform =
-        "translate(" + (e.clientX - rect.left) + "px, " + (e.clientY - rect.top) + "px)";
-    });
-  }
 
   // The interactive wordmark: renders "Genesis" as a field of dot particles
   // on canvas, then lets the mouse repel them and the scroll position spread
@@ -510,26 +502,13 @@
     });
   });
 
-  // "Do not press." Pressing it anyway triggers a full-width scatter of
-  // bursts plus a toast. Exactly as low-stakes as advertised.
-  var dnpButton = document.getElementById("dnpButton");
-  if (dnpButton) {
-    var dnpMessages = [
-      "Okay. You pressed it. Nothing bad happened.",
-      "We're proud of you for that, honestly.",
-      "This button has one job and you just watched it do it.",
-      "Bold choice. Respected."
-    ];
-    var dnpCount = 0;
-    dnpButton.addEventListener("click", function () {
-      var w = window.innerWidth;
-      var y = window.innerHeight * 0.4;
-      [0.15, 0.35, 0.5, 0.65, 0.85].forEach(function (frac) {
-        confettiBurst(w * frac, y + (Math.random() * 120 - 60), 8);
-      });
-      playCoin();
-      showToast(dnpMessages[dnpCount % dnpMessages.length]);
-      dnpCount++;
+  // Double-click anywhere for a small burst at the cursor - a quiet bonus
+  // for anyone who idly double-clicks empty space. Doesn't interfere with
+  // normal text-selection double-click; it just adds a flourish on top.
+  if (!prefersReducedMotion) {
+    document.addEventListener("dblclick", function (e) {
+      if (e.target.closest(".btn, a, button, input, textarea")) return;
+      confettiBurst(e.clientX, e.clientY, 8);
     });
   }
 
