@@ -80,44 +80,6 @@
     });
   }
 
-  // Scroll-spy: highlight the current section's nav link with a real state
-  // (an underline that grows in), not an unstyled default.
-  //
-  // With sections now stacked via position:sticky (see styles.css), a pinned
-  // section can keep intersecting this observer's band for a while after the
-  // next section has slid up and visually covered it. So instead of trusting
-  // whichever entry the browser happens to report last, track every section
-  // currently intersecting and always activate the one furthest down the
-  // page - that's the one actually on top of the stack, matching what the
-  // user sees.
-  var sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
-  var navLinks = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
-  var intersecting = {};
-
-  function setActive(id) {
-    navLinks.forEach(function (link) {
-      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
-    });
-  }
-
-  if (sections.length && "IntersectionObserver" in window) {
-    var spy = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          intersecting[entry.target.id] = entry.isIntersecting;
-        });
-        for (var i = sections.length - 1; i >= 0; i--) {
-          if (intersecting[sections[i].id]) {
-            setActive(sections[i].id);
-            break;
-          }
-        }
-      },
-      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
-    );
-    sections.forEach(function (section) { spy.observe(section); });
-  }
-
   // Reveal-on-scroll: the page renders fully visible at rest. Only elements
   // that start below the first viewport get a "pending" state to animate
   // in from, so nothing is ever hidden waiting on JS at first paint.

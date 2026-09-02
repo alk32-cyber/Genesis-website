@@ -85,6 +85,15 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow-x: hidden;
+  /* A quick fade on arrival so moving between pages reads as one continuous
+     site rather than a hard browser reload. Short enough to never feel
+     like a loading screen - the page is already fully painted underneath. */
+  animation: page-in 220ms var(--ease);
+}
+
+@keyframes page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Fine film grain — the difference between a flat gradient and a considered
@@ -372,31 +381,12 @@ section { padding-block: var(--sp-9); position: relative; }
    Hero — the wordmark is the visual moment, not a stock illustration
    ========================================================================== */
 
-/* ==========================================================================
-   Paged scrolling. Each major section is a scroll-snap point that settles
-   cleanly into full view - scrolling reads as moving between distinct
-   pages rather than one continuous, indeterminate scroll. Native CSS
-   scroll-snap (no JS, no per-frame scroll math), so it stays smooth and
-   never fights or lags behind the user's own scroll input. "proximity"
-   (not "mandatory") so a fast flick can still sail past a page instead of
-   forcing a stop at every single one.
-   ========================================================================== */
-
-html { scroll-snap-type: y proximity; }
-
-main section[id] {
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
-}
-
+/* Each nav destination is now its own page (index/why/programs/founders/
+   involved.html) rather than an anchored section on one long page - see
+   the "page-jump" and "page-next" links for how you move between them.
+   #programs and #founders each get their own full-page tone. */
 #programs { background: var(--bg); }
 #founders { background: var(--bg-raised); }
-
-@media (prefers-reduced-motion: reduce) {
-  /* Snapping is itself a scroll behavior some people find disorienting;
-     free, ordinary scrolling is the safer default here. */
-  html { scroll-snap-type: none; }
-}
 
 .hero {
   padding-block: var(--sp-9) var(--sp-10);
@@ -510,6 +500,47 @@ main section[id] {
   .fact-strip { gap: var(--sp-5); }
   .fact-strip .divider { display: none; }
 }
+
+/* Quick links out of the hero to each page - since the site is now
+   separate pages rather than anchored sections, this is how you actually
+   get anywhere from home besides the header nav. */
+.page-jump {
+  margin-top: var(--sp-8);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+}
+
+.page-jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--size-small);
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding-block: var(--sp-1);
+  border-bottom: 1.5px solid transparent;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.page-jump a:hover { color: var(--accent); border-color: var(--accent); }
+.page-jump a span { transition: transform var(--dur-fast) var(--ease); }
+.page-jump a:hover span { transform: translateX(3px); }
+
+/* "Next page" link at the foot of each page's content - keeps the site
+   feeling like one continuous story even though each stop is a real,
+   separate page. */
+.page-next {
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.page-next .btn span { transition: transform var(--dur-fast) var(--ease); display: inline-block; }
+.page-next .btn:hover span { transform: translateX(4px); }
 
 /* ==========================================================================
    The Gap — numbered reasoning, mirrors a real enumerated list
@@ -789,8 +820,10 @@ main section[id] {
   font-weight: 600;
   font-size: 1.05rem;
   color: var(--cream);
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
+.footer-brand:hover { opacity: 0.75; }
 .footer-brand .accent { color: var(--accent); }
 
 .footer-links { display: flex; gap: var(--sp-6); }
