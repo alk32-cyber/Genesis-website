@@ -59,7 +59,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -80,6 +84,7 @@ body {
   font-weight: 420;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  overflow-x: hidden;
 }
 
 /* Fine film grain — the difference between a flat gradient and a considered
@@ -125,6 +130,10 @@ button { font: inherit; cursor: pointer; }
 .container { max-width: var(--container); margin-inline: auto; padding-inline: var(--sp-5); }
 
 @media (max-width: 640px) { .container { padding-inline: var(--sp-4); } }
+
+/* Anchor-jump offset: without this, clicking a nav link lands the section's
+   top exactly under the sticky 78px header instead of below it. */
+main section[id] { scroll-margin-top: 92px; }
 
 section { padding-block: var(--sp-9); position: relative; }
 
@@ -221,9 +230,21 @@ section { padding-block: var(--sp-9); position: relative; }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(6, 8, 13, 0.82);
+  background: rgba(6, 8, 13, 0.72);
   backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid transparent;
+  transition: background-color var(--dur-base) var(--ease),
+              border-color var(--dur-base) var(--ease),
+              box-shadow var(--dur-base) var(--ease);
+}
+
+/* Toggled by JS once the page has scrolled a little: a slightly deeper,
+   more opaque bar with a real edge, instead of one static look for the
+   whole page. */
+.site-header.is-scrolled {
+  background: rgba(6, 8, 13, 0.92);
+  border-bottom-color: var(--line);
+  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.6);
 }
 
 .nav { display: flex; align-items: center; justify-content: space-between; height: 78px; }
@@ -371,6 +392,12 @@ section { padding-block: var(--sp-9); position: relative; }
 @media (pointer: coarse) { .cursor-glow { display: none; } }
 
 .hero-inner { position: relative; z-index: 1; max-width: 1040px; margin-inline: auto; }
+
+/* Set directly per animation frame from scroll position (see main.js) - no
+   CSS transition here on purpose, so it tracks the scroll 1:1 instead of
+   trailing behind it. Buttons are deliberately excluded so a focused link
+   never fades to invisible. */
+.hero-fade { will-change: transform, opacity; }
 
 .hero .eyebrow { justify-content: center; }
 .hero .eyebrow::before { display: none; }
@@ -768,25 +795,29 @@ section { padding-block: var(--sp-9); position: relative; }
 .reveal.pending { opacity: 0; transform: translateY(22px) scale(0.97); }
 .reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 
-.gap-item:nth-child(1) { transition-delay: 0ms; }
-.gap-item:nth-child(2) { transition-delay: 90ms; }
-.gap-item:nth-child(3) { transition-delay: 180ms; }
+/* Headings/eyebrows (plain .reveal, no extra delay) lead by design; each
+   card/list group below carries a base offset so it visibly follows the
+   heading instead of racing it, then staggers within itself. */
 
-.program-meta > div:nth-child(1) { transition-delay: 0ms; }
-.program-meta > div:nth-child(2) { transition-delay: 70ms; }
-.program-meta > div:nth-child(3) { transition-delay: 140ms; }
+.gap-item:nth-child(1) { transition-delay: 130ms; }
+.gap-item:nth-child(2) { transition-delay: 220ms; }
+.gap-item:nth-child(3) { transition-delay: 310ms; }
 
-.skill-list li:nth-child(1) { transition-delay: 0ms; }
-.skill-list li:nth-child(2) { transition-delay: 60ms; }
-.skill-list li:nth-child(3) { transition-delay: 120ms; }
-.skill-list li:nth-child(4) { transition-delay: 180ms; }
+.program-meta > div:nth-child(1) { transition-delay: 130ms; }
+.program-meta > div:nth-child(2) { transition-delay: 200ms; }
+.program-meta > div:nth-child(3) { transition-delay: 270ms; }
 
-.founders-grid .founder-card:nth-child(1) { transition-delay: 0ms; }
-.founders-grid .founder-card:nth-child(2) { transition-delay: 100ms; }
+.skill-list li:nth-child(1) { transition-delay: 130ms; }
+.skill-list li:nth-child(2) { transition-delay: 190ms; }
+.skill-list li:nth-child(3) { transition-delay: 250ms; }
+.skill-list li:nth-child(4) { transition-delay: 310ms; }
 
-.involve-grid .involve-card:nth-child(1) { transition-delay: 0ms; }
-.involve-grid .involve-card:nth-child(2) { transition-delay: 90ms; }
-.involve-grid .involve-card:nth-child(3) { transition-delay: 180ms; }
+.founders-grid .founder-card:nth-child(1) { transition-delay: 130ms; }
+.founders-grid .founder-card:nth-child(2) { transition-delay: 230ms; }
+
+.involve-grid .involve-card:nth-child(1) { transition-delay: 130ms; }
+.involve-grid .involve-card:nth-child(2) { transition-delay: 220ms; }
+.involve-grid .involve-card:nth-child(3) { transition-delay: 310ms; }
 
 /* Hover lift, applied wherever .reveal is also a card-like grouping.
    Founder and involve cards also get a subtle cursor-driven 3D tilt. */

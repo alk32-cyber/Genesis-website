@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+
   // Footer year
   var yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -24,7 +27,8 @@
   }
 
   // Scroll-spy: highlight the current section's nav link with a real state
-  // (an underline that grows in), not an unstyled default.
+  // (an underline that grows in), not an unstyled default. IntersectionObserver
+  // only - no per-frame scroll math needed for this.
   var sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
   var navLinks = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
 
@@ -49,7 +53,6 @@
   // Reveal-on-scroll: the page renders fully visible at rest. Only elements
   // that start below the first viewport get a "pending" state to animate
   // in from, so nothing is ever hidden waiting on JS at first paint.
-  var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
 
   if (!prefersReducedMotion && "IntersectionObserver" in window) {
@@ -73,46 +76,81 @@
     revealEls.forEach(function (el) { revealObserver.observe(el); });
   }
 
-  // Scroll progress bar — fills left to right with how far down the page you are.
-  var progressBar = document.getElementById("scrollProgress");
-  if (progressBar) {
-    var updateProgress = function () {
-      var doc = document.documentElement;
-      var max = doc.scrollHeight - doc.clientHeight;
-      var pct = max > 0 ? Math.min(1, doc.scrollTop / max) : 0;
-      progressBar.style.transform = "scaleX(" + pct + ")";
-    };
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    updateProgress();
-  }
+  // ==========================================================================
+  // Consolidated scroll pass. Everything that needs to know "how far down
+  // the page / through the hero are we" reads from the same rAF-batched tick
+  // instead of each registering its own scroll listener and re-measuring
+  // layout independently. `heroProgress` is exposed via closure to the
+  // wordmark particle system below, so its scroll-driven "explode" effect
+  // shares this one measurement too.
+  // ==========================================================================
 
-  // Hero parallax — the two glow layers and the cursor light drift at their
-  // own pace as you scroll or move the mouse, independent of the reveal system.
+  var progressBar = document.getElementById("scrollProgress");
+  var siteHeader = document.querySelector(".site-header");
   var hero = document.getElementById("top");
   var glow1 = document.getElementById("heroGlow1");
   var glow2 = document.getElementById("heroGlow2");
-  var cursorGlow = document.getElementById("cursorGlow");
-  var hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+  var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
 
-  if (hero && !prefersReducedMotion) {
-    window.addEventListener(
-      "scroll",
-      function () {
-        var rect = hero.getBoundingClientRect();
-        var progress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height, 1)));
-        if (glow1) glow1.style.transform = "translateY(" + progress * 60 + "px)";
-        if (glow2) glow2.style.transform = "translateY(" + progress * -40 + "px)";
-      },
-      { passive: true }
-    );
+  var heroProgress = 0; // 0 at rest, ->1 as the hero scrolls out of view
 
-    if (hasFinePointer && cursorGlow) {
-      hero.addEventListener("mousemove", function (e) {
-        var rect = hero.getBoundingClientRect();
-        cursorGlow.style.transform =
-          "translate(" + (e.clientX - rect.left) + "px, " + (e.clientY - rect.top) + "px)";
-      });
+  function updateScrollDerived() {
+    var doc = document.documentElement;
+    var scrollTop = doc.scrollTop;
+
+    if (progressBar) {
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? Math.min(1, scrollTop / max) : 0;
+      progressBar.style.transform = "scaleX(" + pct + ")";
     }
+
+    if (siteHeader) {
+      siteHeader.classList.toggle("is-scrolled", scrollTop > 8);
+    }
+
+    if (hero && !prefersReducedMotion) {
+      var rect = hero.getBoundingClientRect();
+      heroProgress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.65, 1)));
+
+      if (glow1) glow1.style.transform = "translateY(" + heroProgress * 60 + "px)";
+      if (glow2) glow2.style.transform = "translateY(" + heroProgress * -40 + "px)";
+
+      if (heroFadeEls.length) {
+        var fadeOpacity = Math.max(0, 1 - heroProgress * 1.15);
+        var fadeShift = -heroProgress * 26;
+        for (var i = 0; i < heroFadeEls.length; i++) {
+          heroFadeEls[i].style.opacity = fadeOpacity;
+          heroFadeEls[i].style.transform = "translateY(" + fadeShift + "px)";
+        }
+      }
+    }
+  }
+
+  // Standard scroll-rAF coalescing pattern: a burst of scroll events collapses
+  // into at most one measurement + write per animation frame.
+  var scrollTicking = false;
+  function onScroll() {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(function () {
+      updateScrollDerived();
+      scrollTicking = false;
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  updateScrollDerived();
+
+  // Cursor-follow glow in the hero - mouse-driven, not scroll-driven, so it
+  // stays a separate lightweight listener.
+  var cursorGlow = document.getElementById("cursorGlow");
+  if (hero && hasFinePointer && cursorGlow && !prefersReducedMotion) {
+    hero.addEventListener("mousemove", function (e) {
+      var rect = hero.getBoundingClientRect();
+      cursorGlow.style.transform =
+        "translate(" + (e.clientX - rect.left) + "px, " + (e.clientY - rect.top) + "px)";
+    });
   }
 
   // The interactive wordmark: renders "Genesis" as a field of dot particles
@@ -136,7 +174,6 @@
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var particles = [];
     var mouse = { x: -9999, y: -9999, active: false };
-    var scrollProgress = 0;
     var explodeCurrent = 0;
     var visible = true;
     var accentColor = "#4fc3ff";
@@ -184,10 +221,11 @@
       requestAnimationFrame(frame);
       if (!visible || !particles.length) return;
 
-      // Smoothly chase the scroll-driven target instead of snapping straight
-      // to it every frame - this is what makes the scatter feel liquid
-      // rather than mechanically locked to the scroll position.
-      explodeCurrent += (scrollProgress - explodeCurrent) * 0.09;
+      // Smoothly chase the scroll-driven target (shared with the consolidated
+      // scroll pass above) instead of snapping straight to it every frame -
+      // this is what makes the scatter feel liquid rather than mechanically
+      // locked to the scroll position.
+      explodeCurrent += (heroProgress - explodeCurrent) * 0.09;
 
       var rect = canvas.getBoundingClientRect();
       var mx = (mouse.x - rect.left) * dpr;
@@ -269,16 +307,6 @@
       }
     });
 
-    window.addEventListener(
-      "scroll",
-      function () {
-        if (!hero) return;
-        var rect = hero.getBoundingClientRect();
-        scrollProgress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.65, 1)));
-      },
-      { passive: true }
-    );
-
     var resizeTimer;
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
@@ -302,10 +330,10 @@
     requestAnimationFrame(frame);
   })();
 
-  // Magnetic buttons: on a fine pointer, a button leans slightly toward the
-  // cursor while hovered. Composited via CSS custom properties so it layers
-  // on top of the existing hover lift instead of fighting it.
-  if (hasFinePointer) {
+  // Magnetic buttons + card tilt: fine pointer only, and skipped entirely
+  // under reduced motion (continuous mouse-driven movement is exactly what
+  // that preference asks to avoid, even though it's not a scroll effect).
+  if (hasFinePointer && !prefersReducedMotion) {
     document.querySelectorAll(".btn").forEach(function (btn) {
       btn.addEventListener("mousemove", function (e) {
         var r = btn.getBoundingClientRect();
@@ -339,7 +367,7 @@
   // Confetti burst: a small scatter of accent dots from wherever a button is
   // clicked. Purely decorative - it never blocks the link/scroll it's on.
   if (!prefersReducedMotion) {
-    function confettiBurst(x, y) {
+    var confettiBurst = function (x, y) {
       for (var i = 0; i < 10; i++) {
         var dot = document.createElement("span");
         dot.className = "confetti-dot";
@@ -354,7 +382,7 @@
           this.remove();
         });
       }
-    }
+    };
 
     document.querySelectorAll(".btn").forEach(function (btn) {
       btn.addEventListener("click", function (e) {
