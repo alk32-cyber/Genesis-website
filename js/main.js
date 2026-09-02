@@ -27,10 +27,18 @@
   }
 
   // Scroll-spy: highlight the current section's nav link with a real state
-  // (an underline that grows in), not an unstyled default. IntersectionObserver
-  // only - no per-frame scroll math needed for this.
+  // (an underline that grows in), not an unstyled default.
+  //
+  // With sections now stacked via position:sticky (see styles.css), a pinned
+  // section can keep intersecting this observer's band for a while after the
+  // next section has slid up and visually covered it. So instead of trusting
+  // whichever entry the browser happens to report last, track every section
+  // currently intersecting and always activate the one furthest down the
+  // page - that's the one actually on top of the stack, matching what the
+  // user sees.
   var sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
   var navLinks = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
+  var intersecting = {};
 
   function setActive(id) {
     navLinks.forEach(function (link) {
@@ -42,8 +50,14 @@
     var spy = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) setActive(entry.target.id);
+          intersecting[entry.target.id] = entry.isIntersecting;
         });
+        for (var i = sections.length - 1; i >= 0; i--) {
+          if (intersecting[sections[i].id]) {
+            setActive(sections[i].id);
+            break;
+          }
+        }
       },
       { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
     );
@@ -210,7 +224,13 @@
       for (var y = 0; y < off.height; y += step) {
         for (var x = 0; x < off.width; x += step) {
           if (data[(y * off.width + x) * 4 + 3] > 120) {
-            pts.push({ ox: x, oy: y, x: x, y: y, vx: 0, vy: 0 });
+            pts.push({
+              ox: x, oy: y, x: x, y: y, vx: 0, vy: 0,
+              // Per-particle phase/speed so the idle drift below isn't
+              // every dot breathing in perfect unison.
+              seed: Math.random() * Math.PI * 2,
+              speed: 0.5 + Math.random() * 0.7
+            });
           }
         }
       }
@@ -230,10 +250,11 @@
       var rect = canvas.getBoundingClientRect();
       var mx = (mouse.x - rect.left) * dpr;
       var my = (mouse.y - rect.top) * dpr;
-      var repelRadius = 85 * dpr;
+      var repelRadius = 130 * dpr;
       var explode = explodeCurrent;
       var cx = canvas.width / 2;
       var cy = canvas.height / 2;
+      var t = performance.now() * 0.001;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = accentColor;
@@ -248,23 +269,29 @@
           ty += (p.oy - cy) * explode * 0.6 - explode * 46 * dpr;
         }
 
+        // A slow, per-particle idle drift so the wordmark is never
+        // perfectly still even before anyone touches it.
+        tx += Math.sin(t * p.speed + p.seed) * 3.2 * dpr;
+        ty += Math.cos(t * p.speed * 0.85 + p.seed) * 3.2 * dpr;
+
         if (mouse.active) {
           var dx = p.x - mx;
           var dy = p.y - my;
           var dist = Math.sqrt(dx * dx + dy * dy) || 1;
           if (dist < repelRadius) {
             var force = (repelRadius - dist) / repelRadius;
-            p.vx += (dx / dist) * force * 1.5;
-            p.vy += (dy / dist) * force * 1.5;
+            p.vx += (dx / dist) * force * 3.6;
+            p.vy += (dy / dist) * force * 3.6;
           }
         }
 
-        // Looser spring, more inertia: a lower pull-back constant and
-        // higher damping retention read as fluid drift instead of a snap.
-        p.vx += (tx - p.x) * 0.028;
-        p.vy += (ty - p.y) * 0.028;
-        p.vx *= 0.9;
-        p.vy *= 0.9;
+        // Loose spring, generous inertia: a low pull-back constant and high
+        // damping retention read as fluid, slow-settling drift rather than
+        // a snap back to place.
+        p.vx += (tx - p.x) * 0.012;
+        p.vy += (ty - p.y) * 0.012;
+        p.vx *= 0.945;
+        p.vy *= 0.945;
         p.x += p.vx;
         p.y += p.vy;
 
@@ -293,7 +320,7 @@
       var rect = canvas.getBoundingClientRect();
       var cx = (e.clientX - rect.left) * dpr;
       var cy = (e.clientY - rect.top) * dpr;
-      var burstRadius = 170 * dpr;
+      var burstRadius = 210 * dpr;
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         var dx = p.x - cx;
@@ -301,8 +328,8 @@
         var dist = Math.sqrt(dx * dx + dy * dy) || 1;
         if (dist < burstRadius) {
           var force = (burstRadius - dist) / burstRadius;
-          p.vx += (dx / dist) * force * 10;
-          p.vy += (dy / dist) * force * 10;
+          p.vx += (dx / dist) * force * 15;
+          p.vy += (dy / dist) * force * 15;
         }
       }
     });

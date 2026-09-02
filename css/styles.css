@@ -349,6 +349,49 @@ section { padding-block: var(--sp-9); position: relative; }
    Hero — the wordmark is the visual moment, not a stock illustration
    ========================================================================== */
 
+/* ==========================================================================
+   Layered scroll stacking. Each major section is pinned at the top of the
+   viewport (position: sticky) with its own opaque background and a rising
+   z-index, so the next section physically slides up and over the one
+   before it instead of the page just cutting from block to block. Pure
+   CSS - no scroll-linked JS needed for the stacking itself. A soft shadow
+   along each section's top edge sells the "this is a layer" read while
+   it's mid-slide.
+   ========================================================================== */
+
+main section[id] {
+  position: sticky;
+  top: 0;
+}
+
+main section[id]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 40px;
+  background: linear-gradient(rgba(0, 0, 0, 0.22), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+#top { z-index: 1; }
+.gap-section { z-index: 2; }
+#programs { z-index: 3; background: var(--bg); }
+#founders { z-index: 4; background: var(--bg-raised); }
+.involve { z-index: 5; }
+
+.site-footer {
+  position: relative;
+  z-index: 6;
+  background: var(--bg-raised);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The stacking read depends on motion to make sense; without it, plain
+     stacked blocks in normal flow are the more legible, safer choice. */
+  main section[id] { position: relative; }
+}
+
 .hero {
   padding-block: var(--sp-9) var(--sp-10);
   position: relative;
@@ -693,7 +736,7 @@ section { padding-block: var(--sp-9); position: relative; }
    Get involved
    ========================================================================== */
 
-.involve { background: var(--bg-raised); border-top: 1px solid var(--line); }
+.involve { background: var(--bg); border-top: 1px solid var(--line); }
 
 .involve-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 
