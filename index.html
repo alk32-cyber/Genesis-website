@@ -83,7 +83,10 @@
         </p>
 
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#programs">See our programs</a>
+          <a class="btn btn-primary chargeable" href="#programs">
+            <span class="charge-ring" aria-hidden="true"></span>
+            <span class="btn-label">See our programs</span>
+          </a>
           <a class="btn btn-ghost" href="https://www.instagram.com/thegenesisinitiative_austin/" target="_blank" rel="noopener">Follow on Instagram</a>
         </div>
 
@@ -291,8 +294,29 @@
         <span>© <span id="year"></span> The Genesis Initiative. Youth-led, Austin, TX.</span>
         <span>Guiding Emerging Next-Gen Entrepreneurial Success.</span>
       </div>
+
+      <div class="footer-fun">
+        <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" aria-label="Toggle button sound effects">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-wave" d="M16 8.5a5 5 0 0 1 0 7"/></svg>
+          <span>Sound</span>
+        </button>
+        <button class="dnp-btn" id="dnpButton" type="button">Do not press</button>
+      </div>
     </div>
   </footer>
+
+  <div class="energy-gauge" id="energyGauge" aria-hidden="true">
+    <svg viewBox="0 0 64 64" width="52" height="52">
+      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(214,230,255,0.14)" stroke-width="5"/>
+      <circle id="energyRing" cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6" transform="rotate(-90 32 32)"/>
+    </svg>
+    <div class="energy-label">
+      <span class="energy-eyebrow">Energy</span>
+      <span class="energy-stage" id="energyStage">Idea</span>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <script src="js/main.js"></script>
 </body>

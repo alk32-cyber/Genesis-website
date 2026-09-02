@@ -222,6 +222,29 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .btn svg { width: 14px; height: 14px; flex: none; }
 
+/* Hold-to-charge ring on the primary hero CTA — purely decorative, the link
+   still fires on a normal click either way, so nothing is gated behind it. */
+.chargeable { position: relative; --charge: 0; }
+
+.charge-ring {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+  background: conic-gradient(var(--cream) calc(var(--charge) * 1%), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  opacity: var(--charge, 0);
+}
+
+.chargeable.is-charged .btn-label { animation: charge-pop 420ms var(--ease-bounce); }
+
+@keyframes charge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
 /* ==========================================================================
    Header / nav
    ========================================================================== */
@@ -807,11 +830,20 @@ main section[id]::before {
 
 .dot-cluster {
   position: absolute;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 0;
   opacity: 0.55;
   animation: dot-float 7s ease-in-out infinite;
+  cursor: grab;
+  touch-action: none;
 }
+
+.dot-cluster:active { cursor: grabbing; }
+
+/* animation:none (not just paused) so the JS-driven inline transform isn't
+   fought by the idle keyframe's own transform value while dragging. */
+.dot-cluster.is-dragging { animation: none; opacity: 0.9; }
+.dot-cluster.is-returning { transition: transform 520ms var(--ease-bounce); }
 
 .dot-cluster svg circle { fill: var(--accent); }
 
@@ -916,6 +948,140 @@ main section[id]::before {
   border-radius: var(--radius-sm);
   z-index: 1001;
   font-weight: 600;
+}
+
+/* ==========================================================================
+   Footer fun row: sound toggle + the "do not press" button
+   ========================================================================== */
+
+.footer-fun {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.6em 1em;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.sound-toggle .sound-wave { opacity: 0.35; transition: opacity var(--dur-fast) var(--ease); }
+
+.sound-toggle:hover { border-color: var(--accent); color: var(--cream); }
+
+.sound-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.sound-toggle[aria-pressed="true"] .sound-wave { opacity: 1; }
+
+/* A joke button that is, as promised, extremely low stakes. Warm red is a
+   deliberate one-off exception to the blue palette here - it's the one
+   place "don't touch this" benefits from reading as a universal warning
+   color rather than matching the brand. */
+.dnp-btn {
+  padding: 0.6em 1.1em;
+  border-radius: var(--radius-pill);
+  border: 1.5px dashed rgba(255, 120, 120, 0.45);
+  background: rgba(255, 90, 90, 0.06);
+  color: rgb(255, 158, 158);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  transition: transform 260ms var(--ease-bounce), background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.dnp-btn:hover { background: rgba(255, 90, 90, 0.12); border-color: rgba(255, 120, 120, 0.7); transform: scale(1.04) rotate(-1deg); }
+.dnp-btn:active { transform: scale(0.96) rotate(0deg); }
+
+/* ==========================================================================
+   Entrepreneurial Energy gauge - a purely decorative dial that fills with
+   scroll depth. No real metric behind it; it's a small reward for exploring
+   the page, not a claim about anything.
+   ========================================================================== */
+
+.energy-gauge {
+  position: fixed;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
+  background: rgba(9, 16, 28, 0.78);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+#energyRing { transition: stroke-dashoffset 220ms var(--ease); }
+
+.energy-label { display: flex; flex-direction: column; line-height: 1.15; }
+
+.energy-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.energy-stage { font-family: var(--font-display); font-size: 0.85rem; color: var(--cream); }
+
+@media (max-width: 640px) {
+  .energy-gauge { right: var(--sp-3); bottom: var(--sp-3); transform: scale(0.85); transform-origin: bottom right; }
+}
+
+/* ==========================================================================
+   Toasts - short-lived feedback for the easter eggs. Same visual language
+   as the rest of the site (pill shape, hairline border, accent numerals).
+   ========================================================================== */
+
+.toast-container {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-7);
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--sp-3);
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-raised-2);
+  border: 1px solid var(--line-strong);
+  color: var(--cream);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.85em 1.4em;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transition: opacity 320ms var(--ease-bounce), transform 320ms var(--ease-bounce);
+  white-space: nowrap;
+}
+
+.toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+@media (max-width: 480px) {
+  .toast { white-space: normal; max-width: 82vw; text-align: center; }
 }
 
 .skip-link:focus { left: var(--sp-4); top: var(--sp-4); }

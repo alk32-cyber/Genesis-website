@@ -4,6 +4,60 @@
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var hasFinePointer = window.matchMedia("(pointer: fine)").matches;
 
+  // Toasts: short-lived feedback shared by every easter egg below, so they
+  // all speak in the same voice instead of each rolling its own popup.
+  var toastContainer = document.getElementById("toastContainer");
+  function showToast(message) {
+    if (!toastContainer) return;
+    var toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    requestAnimationFrame(function () { toast.classList.add("is-visible"); });
+    setTimeout(function () {
+      toast.classList.remove("is-visible");
+      setTimeout(function () { toast.remove(); }, 350);
+    }, 2600);
+  }
+
+  // Sound: a couple of quick oscillator tones for a "coin" blip, opt-in only
+  // and built lazily on first use so no AudioContext exists until someone
+  // actually asks for one (autoplay policies want a user gesture anyway).
+  var soundEnabled = false;
+  try { soundEnabled = localStorage.getItem("genesisSound") === "on"; } catch (e) { /* private mode, etc. */ }
+  var audioCtx = null;
+
+  function playCoin() {
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var now = audioCtx.currentTime;
+      [880, 1320].forEach(function (freq, i) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, now + i * 0.06);
+        gain.gain.setValueAtTime(0.05, now + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.06 + 0.12);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now + i * 0.06);
+        osc.stop(now + i * 0.06 + 0.13);
+      });
+    } catch (e) { /* Web Audio unsupported - silently skip */ }
+  }
+
+  var soundToggle = document.getElementById("soundToggle");
+  if (soundToggle) {
+    soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+    soundToggle.addEventListener("click", function () {
+      soundEnabled = !soundEnabled;
+      soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+      try { localStorage.setItem("genesisSound", soundEnabled ? "on" : "off"); } catch (e) {}
+      if (soundEnabled) playCoin();
+      showToast(soundEnabled ? "Sound on. Try clicking things." : "Sound off.");
+    });
+  }
+
   // Footer year
   var yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -106,16 +160,34 @@
   var glow2 = document.getElementById("heroGlow2");
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
 
+  // Entrepreneurial Energy gauge - a fun, entirely made-up dial with no real
+  // metric behind it. Reuses the same scroll percentage the progress bar
+  // already computes rather than measuring anything twice.
+  var energyRing = document.getElementById("energyRing");
+  var energyStage = document.getElementById("energyStage");
+  var ENERGY_CIRCUMFERENCE = 169.6;
+  var ENERGY_STAGES = ["Idea", "Building", "Pitching", "Funded!"];
+  var lastEnergyStage = -1;
+
   var heroProgress = 0; // 0 at rest, ->1 as the hero scrolls out of view
 
   function updateScrollDerived() {
     var doc = document.documentElement;
     var scrollTop = doc.scrollTop;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var pct = max > 0 ? Math.min(1, scrollTop / max) : 0;
 
     if (progressBar) {
-      var max = doc.scrollHeight - doc.clientHeight;
-      var pct = max > 0 ? Math.min(1, scrollTop / max) : 0;
       progressBar.style.transform = "scaleX(" + pct + ")";
+    }
+
+    if (energyRing) {
+      energyRing.style.strokeDashoffset = ENERGY_CIRCUMFERENCE * (1 - pct);
+      var stageIndex = Math.min(ENERGY_STAGES.length - 1, Math.floor(pct * ENERGY_STAGES.length));
+      if (stageIndex !== lastEnergyStage) {
+        lastEnergyStage = stageIndex;
+        if (energyStage) energyStage.textContent = ENERGY_STAGES[stageIndex];
+      }
     }
 
     if (siteHeader) {
@@ -314,23 +386,43 @@
       });
     }
 
-    // Click (or tap) to give the dots a playful shove outward from that
-    // point - they drift back on their own through the same loose spring.
-    canvas.addEventListener("click", function (e) {
-      var rect = canvas.getBoundingClientRect();
-      var cx = (e.clientX - rect.left) * dpr;
-      var cy = (e.clientY - rect.top) * dpr;
-      var burstRadius = 210 * dpr;
+    // Shared burst impulse - dots within radius get shoved outward from
+    // (cx, cy) in canvas-local pixel space, then drift back on their own
+    // through the same loose spring used everywhere else. Used by both a
+    // direct click/tap and the "genesis" easter egg below.
+    function burst(cx, cy, radius, strength) {
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
         var dx = p.x - cx;
         var dy = p.y - cy;
         var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        if (dist < burstRadius) {
-          var force = (burstRadius - dist) / burstRadius;
-          p.vx += (dx / dist) * force * 15;
-          p.vy += (dy / dist) * force * 15;
+        if (dist < radius) {
+          var force = (radius - dist) / radius;
+          p.vx += (dx / dist) * force * strength;
+          p.vy += (dy / dist) * force * strength;
         }
+      }
+    }
+
+    // Click (or tap) to give the dots a playful shove outward from that point.
+    canvas.addEventListener("click", function (e) {
+      var rect = canvas.getBoundingClientRect();
+      burst((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr, 210 * dpr, 15);
+    });
+
+    // Secret phrase: type "genesis" anywhere on the page for a bigger burst
+    // radiating out from the middle of the wordmark, plus a toast. A rolling
+    // buffer of the last few keys typed, compared case-insensitively.
+    var typedBuffer = "";
+    document.addEventListener("keydown", function (e) {
+      if (e.key.length !== 1) return; // ignore Shift, Enter, arrow keys, etc.
+      var tag = e.target && e.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
+      typedBuffer = (typedBuffer + e.key).slice(-7).toLowerCase();
+      if (typedBuffer === "genesis") {
+        burst(canvas.width / 2, canvas.height / 2, canvas.width * 0.7, 22);
+        showToast("You found it. Genesis mode: activated.");
+        typedBuffer = "";
       }
     });
 
@@ -393,28 +485,191 @@
 
   // Confetti burst: a small scatter of accent dots from wherever a button is
   // clicked. Purely decorative - it never blocks the link/scroll it's on.
-  if (!prefersReducedMotion) {
-    var confettiBurst = function (x, y) {
-      for (var i = 0; i < 10; i++) {
-        var dot = document.createElement("span");
-        dot.className = "confetti-dot";
-        var angle = Math.random() * Math.PI * 2;
-        var dist = 24 + Math.random() * 46;
-        dot.style.setProperty("--dx", (Math.cos(angle) * dist).toFixed(1) + "px");
-        dot.style.setProperty("--dy", (Math.sin(angle) * dist).toFixed(1) + "px");
-        dot.style.left = x + "px";
-        dot.style.top = y + "px";
-        document.body.appendChild(dot);
-        dot.addEventListener("animationend", function () {
-          this.remove();
-        });
-      }
-    };
-
-    document.querySelectorAll(".btn").forEach(function (btn) {
-      btn.addEventListener("click", function (e) {
-        confettiBurst(e.clientX, e.clientY);
+  var confettiBurst = function (x, y, count) {
+    if (prefersReducedMotion) return;
+    for (var i = 0; i < (count || 10); i++) {
+      var dot = document.createElement("span");
+      dot.className = "confetti-dot";
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 24 + Math.random() * 46;
+      dot.style.setProperty("--dx", (Math.cos(angle) * dist).toFixed(1) + "px");
+      dot.style.setProperty("--dy", (Math.sin(angle) * dist).toFixed(1) + "px");
+      dot.style.left = x + "px";
+      dot.style.top = y + "px";
+      document.body.appendChild(dot);
+      dot.addEventListener("animationend", function () {
+        this.remove();
       });
+    }
+  };
+
+  document.querySelectorAll(".btn").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      confettiBurst(e.clientX, e.clientY);
+      playCoin();
     });
+  });
+
+  // "Do not press." Pressing it anyway triggers a full-width scatter of
+  // bursts plus a toast. Exactly as low-stakes as advertised.
+  var dnpButton = document.getElementById("dnpButton");
+  if (dnpButton) {
+    var dnpMessages = [
+      "Okay. You pressed it. Nothing bad happened.",
+      "We're proud of you for that, honestly.",
+      "This button has one job and you just watched it do it.",
+      "Bold choice. Respected."
+    ];
+    var dnpCount = 0;
+    dnpButton.addEventListener("click", function () {
+      var w = window.innerWidth;
+      var y = window.innerHeight * 0.4;
+      [0.15, 0.35, 0.5, 0.65, 0.85].forEach(function (frac) {
+        confettiBurst(w * frac, y + (Math.random() * 120 - 60), 8);
+      });
+      playCoin();
+      showToast(dnpMessages[dnpCount % dnpMessages.length]);
+      dnpCount++;
+    });
+  }
+
+  // Hold-to-charge ring on the primary hero CTA. Purely decorative - a quick
+  // click still fires the link immediately either way, this is just a fun
+  // flourish for anyone who lingers on the button.
+  var chargeBtn = document.querySelector(".chargeable");
+  if (chargeBtn && hasFinePointer && !prefersReducedMotion) {
+    var chargeRaf = null;
+    var chargeStart = 0;
+    var CHARGE_MS = 900;
+
+    function chargeStep() {
+      var pct = Math.min(100, ((performance.now() - chargeStart) / CHARGE_MS) * 100);
+      chargeBtn.style.setProperty("--charge", pct.toFixed(1));
+      if (pct >= 100) {
+        chargeBtn.classList.add("is-charged");
+        confettiBurst(
+          chargeBtn.getBoundingClientRect().left + chargeBtn.offsetWidth / 2,
+          chargeBtn.getBoundingClientRect().top + chargeBtn.offsetHeight / 2,
+          14
+        );
+        return;
+      }
+      chargeRaf = requestAnimationFrame(chargeStep);
+    }
+
+    function chargeReset() {
+      if (chargeRaf) cancelAnimationFrame(chargeRaf);
+      chargeBtn.classList.remove("is-charged");
+      chargeBtn.style.setProperty("--charge", 0);
+    }
+
+    chargeBtn.addEventListener("pointerdown", function () {
+      chargeStart = performance.now();
+      chargeRaf = requestAnimationFrame(chargeStep);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function (evt) {
+      chargeBtn.addEventListener(evt, chargeReset);
+    });
+  }
+
+  // Draggable dot clusters: grab one, fling it, it springs back home. Purely
+  // for the "wait, can I move that?" moment - no state persists.
+  if (hasFinePointer || "ontouchstart" in window) {
+    document.querySelectorAll(".dot-cluster").forEach(function (cluster) {
+      var dragging = false;
+      var startX = 0, startY = 0;
+
+      cluster.addEventListener("pointerdown", function (e) {
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        cluster.classList.remove("is-returning");
+        cluster.classList.add("is-dragging");
+        cluster.setPointerCapture(e.pointerId);
+      });
+
+      cluster.addEventListener("pointermove", function (e) {
+        if (!dragging) return;
+        cluster.style.transform = "translate(" + (e.clientX - startX) + "px, " + (e.clientY - startY) + "px)";
+      });
+
+      function release() {
+        if (!dragging) return;
+        dragging = false;
+        cluster.classList.add("is-returning");
+        cluster.style.transform = "translate(0, 0)";
+        setTimeout(function () {
+          cluster.classList.remove("is-dragging", "is-returning");
+          cluster.style.transform = "";
+        }, 560);
+      }
+
+      cluster.addEventListener("pointerup", release);
+      cluster.addEventListener("pointercancel", release);
+    });
+  }
+
+  // Nav brand: click it five times quickly and it notices.
+  var brandLink = document.querySelector(".brand");
+  if (brandLink) {
+    var brandClicks = 0;
+    var brandTimer = null;
+    brandLink.addEventListener("click", function () {
+      brandClicks++;
+      clearTimeout(brandTimer);
+      brandTimer = setTimeout(function () { brandClicks = 0; }, 1800);
+      if (brandClicks >= 5) {
+        brandClicks = 0;
+        showToast("Okay, stop that. (But also, hi. \u{1F44B})");
+      }
+    });
+  }
+
+  // Cursor trail: a faint line of accent dots follows the pointer everywhere
+  // on the page, not just the hero - the wordmark's motif extended site-wide.
+  // Fine pointer + motion allowed only; a lightweight standalone canvas loop
+  // (independent of the wordmark's own particle system).
+  if (hasFinePointer && !prefersReducedMotion) {
+    var trailCanvas = document.createElement("canvas");
+    trailCanvas.setAttribute("aria-hidden", "true");
+    trailCanvas.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:1499;";
+    document.body.appendChild(trailCanvas);
+    var tctx = trailCanvas.getContext("2d");
+    var trailDpr = Math.min(window.devicePixelRatio || 1, 2);
+    var trailPoints = [];
+    var trailActive = false;
+    var trailHideTimer = null;
+
+    function sizeTrailCanvas() {
+      trailCanvas.width = window.innerWidth * trailDpr;
+      trailCanvas.height = window.innerHeight * trailDpr;
+    }
+    sizeTrailCanvas();
+    window.addEventListener("resize", sizeTrailCanvas, { passive: true });
+
+    document.addEventListener("mousemove", function (e) {
+      trailPoints.push({ x: e.clientX * trailDpr, y: e.clientY * trailDpr, life: 1 });
+      if (trailPoints.length > 26) trailPoints.shift();
+      trailActive = true;
+      clearTimeout(trailHideTimer);
+      trailHideTimer = setTimeout(function () { trailActive = false; }, 700);
+    });
+
+    (function trailFrame() {
+      requestAnimationFrame(trailFrame);
+      tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+      if (!trailActive && !trailPoints.length) return;
+      for (var i = 0; i < trailPoints.length; i++) {
+        var pt = trailPoints[i];
+        pt.life *= 0.93;
+        tctx.globalAlpha = Math.max(0, pt.life * 0.5);
+        tctx.fillStyle = "#4fc3ff";
+        tctx.beginPath();
+        tctx.arc(pt.x, pt.y, 2.2 * trailDpr, 0, Math.PI * 2);
+        tctx.fill();
+      }
+      tctx.globalAlpha = 1;
+      trailPoints = trailPoints.filter(function (pt) { return pt.life > 0.02; });
+    })();
   }
 })();
