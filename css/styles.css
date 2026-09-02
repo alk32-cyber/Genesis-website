@@ -175,6 +175,22 @@ section { padding-block: var(--sp-9); position: relative; }
   max-width: 58ch;
 }
 
+.mission-quote {
+  margin-top: var(--sp-8);
+  padding: var(--sp-7);
+  background: var(--bg-raised);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.mission-quote p {
+  font-family: var(--font-display);
+  font-size: var(--size-h3);
+  font-style: italic;
+  color: var(--cream);
+  line-height: var(--lh-snug);
+}
+
 /* ==========================================================================
    Buttons — pill, tracked caps, restrained hover
    ========================================================================== */
@@ -913,6 +929,15 @@ section { padding-block: var(--sp-9); position: relative; }
 .involve-grid .involve-card:nth-child(2) { transition-delay: 220ms; }
 .involve-grid .involve-card:nth-child(3) { transition-delay: 310ms; }
 
+.preview-grid .preview-card:nth-child(1) { transition-delay: 130ms; }
+.preview-grid .preview-card:nth-child(2) { transition-delay: 200ms; }
+.preview-grid .preview-card:nth-child(3) { transition-delay: 270ms; }
+.preview-grid .preview-card:nth-child(4) { transition-delay: 340ms; }
+
+.steps .step:nth-child(1) { transition-delay: 100ms; }
+.steps .step:nth-child(2) { transition-delay: 220ms; }
+.steps .step:nth-child(3) { transition-delay: 340ms; }
+
 /* Hover lift, applied wherever .reveal is also a card-like grouping.
    Founder and involve cards also get a subtle cursor-driven 3D tilt. */
 .gap-item, .founder-card, .involve-card {
@@ -1083,5 +1108,212 @@ section { padding-block: var(--sp-9); position: relative; }
 @media (max-width: 480px) {
   .toast { white-space: normal; max-width: 82vw; text-align: center; }
 }
+
+/* ==========================================================================
+   Extra copy block, page intro — a short paragraph that bridges the
+   eyebrow/heading and the more structured content below it.
+   ========================================================================== */
+
+.page-intro { max-width: 68ch; font-size: var(--size-lead); line-height: var(--lh-snug); color: var(--ink-soft); margin-top: var(--sp-4); }
+
+/* ==========================================================================
+   Small icon badge — pairs with the gap items, steps, and outcome lists so
+   they're not just numerals/checkmarks with nothing to look at.
+   ========================================================================== */
+
+.mini-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  margin-bottom: var(--sp-3);
+}
+
+.mini-icon svg { width: 18px; height: 18px; }
+
+/* ==========================================================================
+   Stat tiles — real numbers, given room to breathe. Counts up once when
+   scrolled into view via [data-count-to] in main.js; static text (like the
+   "+") lives in a sibling span so the counting only touches the digits.
+   ========================================================================== */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-6);
+  margin-top: var(--sp-7);
+}
+
+.stat-tile { border-top: 2px solid var(--accent); padding-top: var(--sp-4); }
+
+.stat-tile .stat-number {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 1.9rem + 2vw, 3.4rem);
+  color: var(--cream);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-tile .stat-label {
+  display: block;
+  margin-top: var(--sp-2);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ==========================================================================
+   Steps / timeline — a short ordered sequence (a real one: "what happens
+   when you reach out", "what a day looks like"), styled as a connected
+   vertical line rather than another card grid.
+   ========================================================================== */
+
+.steps { position: relative; margin-top: var(--sp-7); padding-left: var(--sp-7); }
+
+.steps::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 8px;
+  bottom: 8px;
+  width: 1.5px;
+  background: var(--line-strong);
+}
+
+.step { position: relative; padding-bottom: var(--sp-7); }
+.step:last-child { padding-bottom: 0; }
+
+.step::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--sp-7) + 8px);
+  top: 4px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+}
+
+.step h3 { font-size: var(--size-h3); margin-bottom: var(--sp-2); }
+.step p { font-size: var(--size-small); max-width: 56ch; }
+
+/* ==========================================================================
+   FAQ accordion — a CSS grid-rows trick (0fr -> 1fr) animates the answer
+   open/closed without ever measuring scrollHeight in JS.
+   ========================================================================== */
+
+.faq-list { margin-top: var(--sp-6); border-top: 1px solid var(--line); }
+
+.faq-item { border-bottom: 1px solid var(--line); }
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-block: var(--sp-5);
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.faq-question:hover { color: var(--accent); }
+
+.faq-plus {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  position: relative;
+}
+
+.faq-plus::before, .faq-plus::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 260ms var(--ease-bounce);
+}
+
+.faq-plus::before { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
+.faq-plus::after { left: 50%; top: 0; height: 100%; width: 2px; transform: translateX(-50%); }
+
+.faq-item.is-open .faq-plus::after { transform: translateX(-50%) rotate(90deg); opacity: 0; }
+
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms var(--ease);
+}
+
+.faq-item.is-open .faq-answer { grid-template-rows: 1fr; }
+
+.faq-answer-inner {
+  overflow: hidden;
+  font-size: var(--size-small);
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+.faq-item.is-open .faq-answer-inner { padding-bottom: var(--sp-5); }
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-answer { transition: none; }
+}
+
+/* ==========================================================================
+   Home page preview cards — since the site is now separate pages rather
+   than one long scroll, this is what fills the hero's landing page and
+   gives a reason to click each destination.
+   ========================================================================== */
+
+.preview-section { border-top: 1px solid var(--line); background: var(--bg-raised); }
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-5);
+}
+
+.preview-card {
+  padding: var(--sp-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised-2);
+  transition: transform 280ms var(--ease-bounce), border-color var(--dur-base) var(--ease);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.preview-card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+.preview-card:hover .mini-icon { transform: scale(1.1) rotate(-6deg); }
+.mini-icon { transition: transform 280ms var(--ease-bounce); }
+
+.preview-card h3 { font-size: 1.1rem; margin-bottom: var(--sp-2); }
+.preview-card p { font-size: var(--size-small); flex: 1; margin-bottom: var(--sp-4); }
+
+.preview-card .preview-link {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.preview-card .preview-link span { transition: transform var(--dur-fast) var(--ease); }
+.preview-card:hover .preview-link span { transform: translateX(4px); }
 
 .skip-link:focus { left: var(--sp-4); top: var(--sp-4); }

@@ -106,6 +106,53 @@
     revealEls.forEach(function (el) { revealObserver.observe(el); });
   }
 
+  // FAQ accordions: click a question, its answer opens via the CSS
+  // grid-rows transition (see styles.css) - only one JS job is toggling
+  // the class, no height measuring.
+  document.querySelectorAll(".faq-item").forEach(function (item) {
+    var btn = item.querySelector(".faq-question");
+    if (!btn) return;
+    btn.setAttribute("aria-expanded", "false");
+    btn.addEventListener("click", function () {
+      var isOpen = item.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", String(isOpen));
+    });
+  });
+
+  // Stat count-up: numbers in [data-count-to] animate from 0 once they
+  // scroll into view. Respects reduced motion by just settling instantly.
+  document.querySelectorAll("[data-count-to]").forEach(function (el) {
+    var target = parseFloat(el.getAttribute("data-count-to"));
+    if (isNaN(target)) return;
+
+    function settle() { el.textContent = target; }
+
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      settle();
+      return;
+    }
+
+    var obs = new IntersectionObserver(
+      function (entries, o) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          o.unobserve(el);
+          var start = performance.now();
+          var DURATION = 1100;
+          (function tick(now) {
+            var t = Math.min(1, (now - start) / DURATION);
+            var eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(target * eased);
+            if (t < 1) requestAnimationFrame(tick);
+            else settle();
+          })(start);
+        });
+      },
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+  });
+
   // ==========================================================================
   // Consolidated scroll pass. Everything that needs to know "how far down
   // the page / through the hero are we" reads from the same rAF-batched tick
