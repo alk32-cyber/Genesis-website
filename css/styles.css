@@ -7,23 +7,26 @@
    ========================================================================== */
 
 :root {
-  --bg:         #06080d;
-  --bg-raised:  #0d1420;
-  --bg-raised-2:#111a2c;
-  --cream:      #f2efe6;
-  --cream-dim:  #cfd3dd;
-  --ink-soft:   #9aa3b8;
-  --ink-faint:  #6b7488;
-  --line:       rgba(242, 239, 230, 0.10);
-  --line-strong:rgba(242, 239, 230, 0.20);
+  --bg:         #0a1a30;
+  --bg-raised:  #0f2340;
+  --bg-raised-2:#132a4d;
+  --cream:      #f5f8ff;
+  --cream-dim:  #d3ddf0;
+  --ink-soft:   #9fb2d4;
+  --ink-faint:  #708bb8;
+  --line:       rgba(214, 230, 255, 0.12);
+  --line-strong:rgba(214, 230, 255, 0.24);
 
-  --accent:      #6ea8ff;
-  --accent-dim:  #4a7fd6;
+  --accent:      #4fc3ff;
+  --accent-dim:  #2fa3e6;
   --accent-deep: #1c3f7a;
-  --accent-soft: rgba(110, 168, 255, 0.14);
+  --accent-soft: rgba(79, 195, 255, 0.16);
+  --accent-bright: #9fe6ff;
   --accent-ink:  #071427;
 
-  --focus: #8fbaff;
+  --focus: #9fe6ff;
+
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -92,6 +95,20 @@ body::before {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
+/* Scroll progress — thin, fills left to right with how far down the page you are. */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 1002;
+  box-shadow: 0 0 12px rgba(79, 195, 255, 0.7);
+}
+
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; color: var(--cream); text-wrap: balance; }
@@ -156,7 +173,7 @@ section { padding-block: var(--sp-9); position: relative; }
   text-transform: uppercase;
   border-radius: var(--radius-pill);
   border: 1.5px solid transparent;
-  transition: transform var(--dur-fast) var(--ease),
+  transition: transform 320ms var(--ease-bounce),
               box-shadow var(--dur-fast) var(--ease),
               background-color var(--dur-fast) var(--ease),
               border-color var(--dur-fast) var(--ease),
@@ -172,8 +189,11 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .btn-primary:hover {
   background: var(--accent-soft);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.035);
+  box-shadow: 0 10px 30px -12px var(--accent-soft);
 }
+
+.btn-primary:active { transform: translateY(0) scale(0.97); }
 
 .btn-ghost {
   background: rgba(242, 239, 230, 0.04);
@@ -184,7 +204,10 @@ section { padding-block: var(--sp-9); position: relative; }
 .btn-ghost:hover {
   border-color: var(--cream-dim);
   background: rgba(242, 239, 230, 0.08);
+  transform: translateY(-2px) scale(1.035);
 }
+
+.btn-ghost:active { transform: translateY(0) scale(0.97); }
 
 .btn svg { width: 14px; height: 14px; flex: none; }
 
@@ -307,19 +330,66 @@ section { padding-block: var(--sp-9); position: relative; }
   padding-block: var(--sp-9) var(--sp-10);
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(1200px 640px at 12% -12%, rgba(110, 168, 255, 0.30), transparent 60%),
-    radial-gradient(900px 560px at 92% 6%, rgba(74, 127, 214, 0.16), transparent 55%),
-    var(--bg);
+  background: var(--bg);
   text-align: center;
 }
 
-.hero-inner { position: relative; max-width: 980px; margin-inline: auto; }
+/* Parallax glow layers — real elements (not a flat background gradient) so
+   scroll can nudge them at their own pace for a sense of depth. */
+.hero-glow {
+  position: absolute;
+  inset: -10% -10% auto -10%;
+  height: 130%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+
+.hero-glow-1 { background: radial-gradient(1200px 640px at 12% -12%, rgba(79, 195, 255, 0.32), transparent 60%); }
+.hero-glow-2 { background: radial-gradient(900px 560px at 92% 6%, rgba(47, 163, 230, 0.18), transparent 55%); }
+
+/* Cursor-follow glow — a small, soft, mouse-driven light. Pointer-fine only. */
+.cursor-glow {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  margin-left: -210px;
+  margin-top: -210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(159, 230, 255, 0.16), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+  z-index: 0;
+  will-change: transform;
+}
+
+.hero:hover .cursor-glow { opacity: 1; }
+
+@media (pointer: coarse) { .cursor-glow { display: none; } }
+
+.hero-inner { position: relative; z-index: 1; max-width: 1040px; margin-inline: auto; }
 
 .hero .eyebrow { justify-content: center; }
 .hero .eyebrow::before { display: none; }
 
-.wordmark { width: min(100%, 880px); margin-inline: auto; display: block; height: auto; }
+.wordmark-wrap { width: min(100%, 1160px); margin-inline: auto; position: relative; }
+.wordmark, .wordmark-canvas { width: 100%; display: block; height: auto; }
+.wordmark-canvas { touch-action: pan-y; cursor: default; }
+
+.hero-hint {
+  margin-top: var(--sp-3);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+}
+
+@media (pointer: fine) {
+  .hero-hint.is-ready { opacity: 1; }
+}
 
 .hero-tagline {
   margin-top: var(--sp-5);
@@ -660,12 +730,72 @@ section { padding-block: var(--sp-9); position: relative; }
 }
 
 /* ==========================================================================
-   Scroll reveal — visible at rest; only animates content starting off-screen
+   Floating dot clusters — small, thematic (same motif as the wordmark),
+   idle drift for atmosphere. Decorative only: aria-hidden, no layout weight.
    ========================================================================== */
 
-.reveal { opacity: 1; transform: none; transition: opacity 560ms var(--ease), transform 560ms var(--ease); }
-.reveal.pending { opacity: 0; transform: translateY(16px); }
-.reveal.is-visible { opacity: 1; transform: translateY(0); }
+.dot-cluster {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  animation: dot-float 7s ease-in-out infinite;
+}
+
+.dot-cluster svg circle { fill: var(--accent); }
+
+@keyframes dot-float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-14px) translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-cluster { animation: none; }
+}
+
+/* ==========================================================================
+   Scroll reveal — visible at rest; only animates content starting off-screen.
+   Staggered by position so groups cascade in rather than popping together.
+   ========================================================================== */
+
+.reveal {
+  opacity: 1;
+  transform: none;
+  transition: opacity 620ms var(--ease-bounce), transform 620ms var(--ease-bounce);
+}
+
+.reveal.pending { opacity: 0; transform: translateY(22px) scale(0.97); }
+.reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+.gap-item:nth-child(1) { transition-delay: 0ms; }
+.gap-item:nth-child(2) { transition-delay: 90ms; }
+.gap-item:nth-child(3) { transition-delay: 180ms; }
+
+.program-meta > div:nth-child(1) { transition-delay: 0ms; }
+.program-meta > div:nth-child(2) { transition-delay: 70ms; }
+.program-meta > div:nth-child(3) { transition-delay: 140ms; }
+
+.skill-list li:nth-child(1) { transition-delay: 0ms; }
+.skill-list li:nth-child(2) { transition-delay: 60ms; }
+.skill-list li:nth-child(3) { transition-delay: 120ms; }
+.skill-list li:nth-child(4) { transition-delay: 180ms; }
+
+.founders-grid .founder-card:nth-child(1) { transition-delay: 0ms; }
+.founders-grid .founder-card:nth-child(2) { transition-delay: 100ms; }
+
+.involve-grid .involve-card:nth-child(1) { transition-delay: 0ms; }
+.involve-grid .involve-card:nth-child(2) { transition-delay: 90ms; }
+.involve-grid .involve-card:nth-child(3) { transition-delay: 180ms; }
+
+/* Hover lift, applied wherever .reveal is also a card-like grouping */
+.gap-item, .founder-card, .involve-card {
+  transition: background-color var(--dur-base) var(--ease), transform 320ms var(--ease-bounce);
+}
+
+.gap-item:hover, .founder-card:hover { background: rgba(79, 195, 255, 0.03); }
+.involve-card:hover { background: rgba(79, 195, 255, 0.05); transform: translateY(-4px); }
+.monogram { transition: transform 320ms var(--ease-bounce); }
+.founder-card:hover .monogram { transform: scale(1.08) rotate(-4deg); }
 
 .skip-link {
   position: absolute;

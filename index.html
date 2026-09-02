@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -55,17 +56,24 @@
   <main id="main">
     <!-- ============================== HERO ============================== -->
     <section class="hero" id="top">
+      <div class="hero-glow hero-glow-1" id="heroGlow1" aria-hidden="true"></div>
+      <div class="hero-glow hero-glow-2" id="heroGlow2" aria-hidden="true"></div>
+      <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
       <div class="container hero-inner">
         <p class="eyebrow">Austin, Texas — Youth-Led Nonprofit</p>
 
-        <svg class="wordmark" viewBox="0 0 920 190" role="img" aria-label="Genesis">
-          <defs>
-            <pattern id="dotgrid" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
-              <circle cx="1.6" cy="1.6" r="1.35" fill="var(--accent)"/>
-            </pattern>
-          </defs>
-          <text x="460" y="150" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="168" font-weight="600" fill="url(#dotgrid)">Genesis</text>
-        </svg>
+        <div class="wordmark-wrap" id="wordmarkWrap">
+          <svg class="wordmark" id="wordmarkSvg" viewBox="0 0 920 190" role="img" aria-label="Genesis">
+            <defs>
+              <pattern id="dotgrid" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
+                <circle cx="1.6" cy="1.6" r="1.35" fill="var(--accent)"/>
+              </pattern>
+            </defs>
+            <text x="460" y="150" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="168" font-weight="600" fill="url(#dotgrid)">Genesis</text>
+          </svg>
+        </div>
+        <p class="hero-hint" id="heroHint">Move your mouse over it. Then scroll.</p>
 
         <p class="hero-tagline">Taught by teens. <strong>Built for teens.</strong></p>
 
@@ -92,6 +100,9 @@
 
     <!-- ============================== THE GAP ============================== -->
     <section id="gap" class="gap-section">
+      <div class="dot-cluster" style="top: 10%; right: 6%;" aria-hidden="true">
+        <svg width="46" height="46" viewBox="0 0 46 46"><circle cx="4" cy="4" r="2.2"/><circle cx="18" cy="4" r="2.2"/><circle cx="4" cy="18" r="2.2"/></svg>
+      </div>
       <div class="container gap-grid">
         <div class="gap-rail">
           <p class="eyebrow">The Gap</p>
@@ -152,26 +163,26 @@
             </p>
 
             <div class="program-meta">
-              <div><strong>Format</strong><span>In-person camp &amp; workshops</span></div>
-              <div><strong>Audience</strong><span>Middle &amp; early high school</span></div>
-              <div><strong>Location</strong><span>Greater Austin area</span></div>
+              <div class="reveal"><strong>Format</strong><span>In-person camp &amp; workshops</span></div>
+              <div class="reveal"><strong>Audience</strong><span>Middle &amp; early high school</span></div>
+              <div class="reveal"><strong>Location</strong><span>Greater Austin area</span></div>
             </div>
           </div>
 
           <ul class="skill-list">
-            <li>
+            <li class="reveal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               Finding and validating a real problem worth solving
             </li>
-            <li>
+            <li class="reveal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               Budgeting and the basics of managing money
             </li>
-            <li>
+            <li class="reveal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               Building and pitching an idea as a team
             </li>
-            <li>
+            <li class="reveal">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               Mentorship from teen founders, not just adults
             </li>
@@ -195,7 +206,7 @@
         </div>
 
         <div class="founders-grid">
-          <article class="founder-card">
+          <article class="founder-card reveal">
             <div class="monogram" aria-hidden="true">HC</div>
             <div>
               <p class="founder-role">Co-Founder &amp; CEO</p>
@@ -210,7 +221,7 @@
             </div>
           </article>
 
-          <article class="founder-card">
+          <article class="founder-card reveal">
             <div class="monogram" aria-hidden="true">SK</div>
             <div>
               <p class="founder-role">Co-Founder</p>
@@ -230,6 +241,9 @@
 
     <!-- ============================== GET INVOLVED ============================== -->
     <section id="involved" class="involve">
+      <div class="dot-cluster" style="bottom: 12%; left: 4%; animation-delay: -2.5s;" aria-hidden="true">
+        <svg width="60" height="30" viewBox="0 0 60 30"><circle cx="4" cy="26" r="2.2"/><circle cx="18" cy="18" r="2.2"/><circle cx="32" cy="10" r="2.2"/><circle cx="46" cy="4" r="2.2"/></svg>
+      </div>
       <div class="container">
         <div class="section-head">
           <p class="eyebrow">Get Involved</p>
@@ -238,21 +252,21 @@
         </div>
 
         <div class="involve-grid">
-          <article class="involve-card">
+          <article class="involve-card reveal">
             <p class="involve-num">01</p>
             <h3>Enroll a student</h3>
             <p>Sign up for the High School Head Start Camp or a workshop. Grades 6–9 in the Austin area.</p>
             <a class="btn btn-ghost" href="https://www.instagram.com/thegenesisinitiative_austin/" target="_blank" rel="noopener">Message us</a>
           </article>
 
-          <article class="involve-card">
+          <article class="involve-card reveal">
             <p class="involve-num">02</p>
             <h3>Partner with us</h3>
             <p>Schools, youth organizations, and local businesses can partner on camps, space, or mentorship.</p>
             <a class="btn btn-ghost" href="mailto:hello@thegenesisinitiative.us">Email the team</a>
           </article>
 
-          <article class="involve-card">
+          <article class="involve-card reveal">
             <p class="involve-num">03</p>
             <h3>Follow along</h3>
             <p>Camp dates, application windows, and student projects are posted first on Instagram.</p>

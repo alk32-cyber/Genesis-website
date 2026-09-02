@@ -72,4 +72,207 @@
     );
     revealEls.forEach(function (el) { revealObserver.observe(el); });
   }
+
+  // Scroll progress bar — fills left to right with how far down the page you are.
+  var progressBar = document.getElementById("scrollProgress");
+  if (progressBar) {
+    var updateProgress = function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? Math.min(1, doc.scrollTop / max) : 0;
+      progressBar.style.transform = "scaleX(" + pct + ")";
+    };
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  // Hero parallax — the two glow layers and the cursor light drift at their
+  // own pace as you scroll or move the mouse, independent of the reveal system.
+  var hero = document.getElementById("top");
+  var glow1 = document.getElementById("heroGlow1");
+  var glow2 = document.getElementById("heroGlow2");
+  var cursorGlow = document.getElementById("cursorGlow");
+  var hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+
+  if (hero && !prefersReducedMotion) {
+    window.addEventListener(
+      "scroll",
+      function () {
+        var rect = hero.getBoundingClientRect();
+        var progress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height, 1)));
+        if (glow1) glow1.style.transform = "translateY(" + progress * 60 + "px)";
+        if (glow2) glow2.style.transform = "translateY(" + progress * -40 + "px)";
+      },
+      { passive: true }
+    );
+
+    if (hasFinePointer && cursorGlow) {
+      hero.addEventListener("mousemove", function (e) {
+        var rect = hero.getBoundingClientRect();
+        cursorGlow.style.transform =
+          "translate(" + (e.clientX - rect.left) + "px, " + (e.clientY - rect.top) + "px)";
+      });
+    }
+  }
+
+  // The interactive wordmark: renders "Genesis" as a field of dot particles
+  // on canvas, then lets the mouse repel them and the scroll position spread
+  // them apart. Falls back to the static SVG dot-matrix (already in the DOM)
+  // when JS, canvas, or reduced-motion rules it out.
+  (function initWordmark() {
+    var wrap = document.getElementById("wordmarkWrap");
+    var svgFallback = document.getElementById("wordmarkSvg");
+    var hint = document.getElementById("heroHint");
+    if (!wrap || prefersReducedMotion) return;
+
+    var canvas = document.createElement("canvas");
+    canvas.className = "wordmark-canvas";
+    canvas.setAttribute("aria-hidden", "true");
+    var ctx = canvas.getContext && canvas.getContext("2d");
+    if (!ctx) return;
+
+    wrap.appendChild(canvas);
+    if (svgFallback) svgFallback.style.display = "none";
+    if (hint) hint.classList.add("is-ready");
+
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var particles = [];
+    var mouse = { x: -9999, y: -9999, active: false };
+    var scrollProgress = 0;
+    var visible = true;
+    var accentColor = "#4fc3ff";
+
+    function readAccent() {
+      var v = getComputedStyle(document.documentElement).getPropertyValue("--accent");
+      if (v && v.trim()) accentColor = v.trim();
+    }
+
+    function buildParticles() {
+      var rect = wrap.getBoundingClientRect();
+      var w = Math.max(rect.width, 260);
+      var h = w * (190 / 920);
+
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+
+      var off = document.createElement("canvas");
+      off.width = canvas.width;
+      off.height = canvas.height;
+      var octx = off.getContext("2d");
+      octx.fillStyle = "#fff";
+      octx.textAlign = "center";
+      octx.textBaseline = "middle";
+      var fontSize = off.height * 0.86;
+      octx.font = "600 " + fontSize + "px Fraunces, Georgia, serif";
+      octx.fillText("Genesis", off.width / 2, off.height * 0.56);
+
+      var data = octx.getImageData(0, 0, off.width, off.height).data;
+      var step = Math.max(4, Math.round(6 * dpr));
+      var pts = [];
+      for (var y = 0; y < off.height; y += step) {
+        for (var x = 0; x < off.width; x += step) {
+          if (data[(y * off.width + x) * 4 + 3] > 120) {
+            pts.push({ ox: x, oy: y, x: x, y: y, vx: 0, vy: 0 });
+          }
+        }
+      }
+      particles = pts;
+    }
+
+    function frame() {
+      requestAnimationFrame(frame);
+      if (!visible || !particles.length) return;
+
+      var rect = canvas.getBoundingClientRect();
+      var mx = (mouse.x - rect.left) * dpr;
+      var my = (mouse.y - rect.top) * dpr;
+      var repelRadius = 75 * dpr;
+      var explode = scrollProgress;
+      var cx = canvas.width / 2;
+      var cy = canvas.height / 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = accentColor;
+
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        var tx = p.ox;
+        var ty = p.oy;
+
+        if (explode > 0) {
+          tx += (p.ox - cx) * explode * 0.6;
+          ty += (p.oy - cy) * explode * 0.6 - explode * 46 * dpr;
+        }
+
+        if (mouse.active) {
+          var dx = p.x - mx;
+          var dy = p.y - my;
+          var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          if (dist < repelRadius) {
+            var force = (repelRadius - dist) / repelRadius;
+            p.vx += (dx / dist) * force * 2.4;
+            p.vy += (dy / dist) * force * 2.4;
+          }
+        }
+
+        p.vx += (tx - p.x) * 0.06;
+        p.vy += (ty - p.y) * 0.06;
+        p.vx *= 0.82;
+        p.vy *= 0.82;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.globalAlpha = Math.max(0, 1 - explode * 0.75);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.5 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    if (hasFinePointer) {
+      wrap.addEventListener("mousemove", function (e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        mouse.active = true;
+      });
+      wrap.addEventListener("mouseleave", function () {
+        mouse.active = false;
+      });
+    }
+
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (!hero) return;
+        var rect = hero.getBoundingClientRect();
+        scrollProgress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.65, 1)));
+      },
+      { passive: true }
+    );
+
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(buildParticles, 200);
+    });
+
+    if ("IntersectionObserver" in window && hero) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          visible = entry.isIntersecting;
+        });
+      }).observe(hero);
+    }
+
+    readAccent();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(buildParticles);
+    } else {
+      buildParticles();
+    }
+    requestAnimationFrame(frame);
+  })();
 })();
