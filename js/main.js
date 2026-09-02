@@ -122,7 +122,6 @@
   (function initWordmark() {
     var wrap = document.getElementById("wordmarkWrap");
     var svgFallback = document.getElementById("wordmarkSvg");
-    var hint = document.getElementById("heroHint");
     if (!wrap || prefersReducedMotion) return;
 
     var canvas = document.createElement("canvas");
@@ -133,12 +132,12 @@
 
     wrap.appendChild(canvas);
     if (svgFallback) svgFallback.style.display = "none";
-    if (hint) hint.classList.add("is-ready");
 
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var particles = [];
     var mouse = { x: -9999, y: -9999, active: false };
     var scrollProgress = 0;
+    var explodeCurrent = 0;
     var visible = true;
     var accentColor = "#4fc3ff";
 
@@ -185,11 +184,16 @@
       requestAnimationFrame(frame);
       if (!visible || !particles.length) return;
 
+      // Smoothly chase the scroll-driven target instead of snapping straight
+      // to it every frame - this is what makes the scatter feel liquid
+      // rather than mechanically locked to the scroll position.
+      explodeCurrent += (scrollProgress - explodeCurrent) * 0.09;
+
       var rect = canvas.getBoundingClientRect();
       var mx = (mouse.x - rect.left) * dpr;
       var my = (mouse.y - rect.top) * dpr;
-      var repelRadius = 75 * dpr;
-      var explode = scrollProgress;
+      var repelRadius = 85 * dpr;
+      var explode = explodeCurrent;
       var cx = canvas.width / 2;
       var cy = canvas.height / 2;
 
@@ -201,7 +205,7 @@
         var tx = p.ox;
         var ty = p.oy;
 
-        if (explode > 0) {
+        if (explode > 0.001) {
           tx += (p.ox - cx) * explode * 0.6;
           ty += (p.oy - cy) * explode * 0.6 - explode * 46 * dpr;
         }
@@ -212,15 +216,17 @@
           var dist = Math.sqrt(dx * dx + dy * dy) || 1;
           if (dist < repelRadius) {
             var force = (repelRadius - dist) / repelRadius;
-            p.vx += (dx / dist) * force * 2.4;
-            p.vy += (dy / dist) * force * 2.4;
+            p.vx += (dx / dist) * force * 1.5;
+            p.vy += (dy / dist) * force * 1.5;
           }
         }
 
-        p.vx += (tx - p.x) * 0.06;
-        p.vy += (ty - p.y) * 0.06;
-        p.vx *= 0.82;
-        p.vy *= 0.82;
+        // Looser spring, more inertia: a lower pull-back constant and
+        // higher damping retention read as fluid drift instead of a snap.
+        p.vx += (tx - p.x) * 0.028;
+        p.vy += (ty - p.y) * 0.028;
+        p.vx *= 0.9;
+        p.vy *= 0.9;
         p.x += p.vx;
         p.y += p.vy;
 
@@ -242,6 +248,26 @@
         mouse.active = false;
       });
     }
+
+    // Click (or tap) to give the dots a playful shove outward from that
+    // point - they drift back on their own through the same loose spring.
+    canvas.addEventListener("click", function (e) {
+      var rect = canvas.getBoundingClientRect();
+      var cx = (e.clientX - rect.left) * dpr;
+      var cy = (e.clientY - rect.top) * dpr;
+      var burstRadius = 170 * dpr;
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        var dx = p.x - cx;
+        var dy = p.y - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (dist < burstRadius) {
+          var force = (burstRadius - dist) / burstRadius;
+          p.vx += (dx / dist) * force * 10;
+          p.vy += (dy / dist) * force * 10;
+        }
+      }
+    });
 
     window.addEventListener(
       "scroll",
@@ -275,4 +301,65 @@
     }
     requestAnimationFrame(frame);
   })();
+
+  // Magnetic buttons: on a fine pointer, a button leans slightly toward the
+  // cursor while hovered. Composited via CSS custom properties so it layers
+  // on top of the existing hover lift instead of fighting it.
+  if (hasFinePointer) {
+    document.querySelectorAll(".btn").forEach(function (btn) {
+      btn.addEventListener("mousemove", function (e) {
+        var r = btn.getBoundingClientRect();
+        var mx = (e.clientX - r.left - r.width / 2) * 0.22;
+        var my = (e.clientY - r.top - r.height / 2) * 0.3;
+        btn.style.setProperty("--magx", mx.toFixed(1) + "px");
+        btn.style.setProperty("--magy", my.toFixed(1) + "px");
+      });
+      btn.addEventListener("mouseleave", function () {
+        btn.style.setProperty("--magx", "0px");
+        btn.style.setProperty("--magy", "0px");
+      });
+    });
+
+    // Card tilt: founder and involve cards lean toward the cursor in 3D.
+    document.querySelectorAll(".founder-card, .involve-card").forEach(function (card) {
+      card.addEventListener("mousemove", function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty("--rx", (-py * 6).toFixed(2) + "deg");
+        card.style.setProperty("--ry", (px * 6).toFixed(2) + "deg");
+      });
+      card.addEventListener("mouseleave", function () {
+        card.style.setProperty("--rx", "0deg");
+        card.style.setProperty("--ry", "0deg");
+      });
+    });
+  }
+
+  // Confetti burst: a small scatter of accent dots from wherever a button is
+  // clicked. Purely decorative - it never blocks the link/scroll it's on.
+  if (!prefersReducedMotion) {
+    function confettiBurst(x, y) {
+      for (var i = 0; i < 10; i++) {
+        var dot = document.createElement("span");
+        dot.className = "confetti-dot";
+        var angle = Math.random() * Math.PI * 2;
+        var dist = 24 + Math.random() * 46;
+        dot.style.setProperty("--dx", (Math.cos(angle) * dist).toFixed(1) + "px");
+        dot.style.setProperty("--dy", (Math.sin(angle) * dist).toFixed(1) + "px");
+        dot.style.left = x + "px";
+        dot.style.top = y + "px";
+        document.body.appendChild(dot);
+        dot.addEventListener("animationend", function () {
+          this.remove();
+        });
+      }
+    }
+
+    document.querySelectorAll(".btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        confettiBurst(e.clientX, e.clientY);
+      });
+    });
+  }
 })();

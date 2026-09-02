@@ -181,6 +181,8 @@ section { padding-block: var(--sp-9); position: relative; }
   white-space: nowrap;
 }
 
+.btn { --magx: 0px; --magy: 0px; }
+
 .btn-primary {
   background: transparent;
   border-color: var(--accent);
@@ -189,7 +191,7 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .btn-primary:hover {
   background: var(--accent-soft);
-  transform: translateY(-2px) scale(1.035);
+  transform: translateY(-2px) scale(1.035) translate(var(--magx), var(--magy));
   box-shadow: 0 10px 30px -12px var(--accent-soft);
 }
 
@@ -204,7 +206,7 @@ section { padding-block: var(--sp-9); position: relative; }
 .btn-ghost:hover {
   border-color: var(--cream-dim);
   background: rgba(242, 239, 230, 0.08);
-  transform: translateY(-2px) scale(1.035);
+  transform: translateY(-2px) scale(1.035) translate(var(--magx), var(--magy));
 }
 
 .btn-ghost:active { transform: translateY(0) scale(0.97); }
@@ -373,23 +375,22 @@ section { padding-block: var(--sp-9); position: relative; }
 .hero .eyebrow { justify-content: center; }
 .hero .eyebrow::before { display: none; }
 
-.wordmark-wrap { width: min(100%, 1160px); margin-inline: auto; position: relative; }
-.wordmark, .wordmark-canvas { width: 100%; display: block; height: auto; }
-.wordmark-canvas { touch-action: pan-y; cursor: default; }
-
-.hero-hint {
+/* Full-bleed wordmark: breaks out of the hero's text column so it can run
+   much wider than the copy above and below it (roughly +75% over the old
+   1040px-constrained version), capped for very wide screens. */
+.wordmark-wrap {
+  width: 100vw;
+  max-width: 1900px;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  padding-inline: var(--sp-5);
+  box-sizing: border-box;
+  position: relative;
   margin-top: var(--sp-3);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  opacity: 0;
-  transition: opacity 400ms var(--ease);
 }
 
-@media (pointer: fine) {
-  .hero-hint.is-ready { opacity: 1; }
-}
+.wordmark, .wordmark-canvas { width: 100%; display: block; height: auto; }
+.wordmark-canvas { touch-action: pan-y; cursor: pointer; }
 
 .hero-tagline {
   margin-top: var(--sp-5);
@@ -787,15 +788,49 @@ section { padding-block: var(--sp-9); position: relative; }
 .involve-grid .involve-card:nth-child(2) { transition-delay: 90ms; }
 .involve-grid .involve-card:nth-child(3) { transition-delay: 180ms; }
 
-/* Hover lift, applied wherever .reveal is also a card-like grouping */
+/* Hover lift, applied wherever .reveal is also a card-like grouping.
+   Founder and involve cards also get a subtle cursor-driven 3D tilt. */
 .gap-item, .founder-card, .involve-card {
+  --rx: 0deg;
+  --ry: 0deg;
   transition: background-color var(--dur-base) var(--ease), transform 320ms var(--ease-bounce);
 }
 
-.gap-item:hover, .founder-card:hover { background: rgba(79, 195, 255, 0.03); }
-.involve-card:hover { background: rgba(79, 195, 255, 0.05); transform: translateY(-4px); }
+.gap-item:hover { background: rgba(79, 195, 255, 0.03); }
+
+.founder-card, .involve-card {
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+}
+
+.founder-card:hover { background: rgba(79, 195, 255, 0.03); }
+
+.involve-card:hover {
+  background: rgba(79, 195, 255, 0.05);
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-4px);
+}
+
 .monogram { transition: transform 320ms var(--ease-bounce); }
 .founder-card:hover .monogram { transform: scale(1.08) rotate(-4deg); }
+
+/* Confetti burst — a small scatter of accent dots on primary interactions,
+   the same dot motif as the wordmark, not generic sparkle. */
+.confetti-dot {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  animation: confetti-pop 620ms var(--ease) forwards;
+}
+
+@keyframes confetti-pop {
+  0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+}
 
 .skip-link {
   position: absolute;
