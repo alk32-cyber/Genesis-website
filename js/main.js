@@ -162,7 +162,6 @@
   // shares this one measurement too.
   // ==========================================================================
 
-  var progressBar = document.getElementById("scrollProgress");
   var siteHeader = document.querySelector(".site-header");
   var hero = document.getElementById("top");
   var glow1 = document.getElementById("heroGlow1");
@@ -170,8 +169,7 @@
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
 
   // Entrepreneurial Energy gauge - a fun, entirely made-up dial with no real
-  // metric behind it. Reuses the same scroll percentage the progress bar
-  // already computes rather than measuring anything twice.
+  // metric behind it. Driven by the same scroll percentage computed below.
   var energyRing = document.getElementById("energyRing");
   var energyStage = document.getElementById("energyStage");
   var ENERGY_CIRCUMFERENCE = 169.6;
@@ -185,10 +183,6 @@
     var scrollTop = doc.scrollTop;
     var max = doc.scrollHeight - doc.clientHeight;
     var pct = max > 0 ? Math.min(1, scrollTop / max) : 0;
-
-    if (progressBar) {
-      progressBar.style.transform = "scaleX(" + pct + ")";
-    }
 
     if (energyRing) {
       energyRing.style.strokeDashoffset = ENERGY_CIRCUMFERENCE * (1 - pct);
