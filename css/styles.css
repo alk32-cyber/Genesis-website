@@ -166,22 +166,6 @@ section { padding-block: var(--sp-9); position: relative; }
   max-width: 58ch;
 }
 
-.mission-quote {
-  margin-top: var(--sp-8);
-  padding: var(--sp-7);
-  background: var(--bg-raised);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-
-.mission-quote p {
-  font-family: var(--font-display);
-  font-size: var(--size-h3);
-  font-style: italic;
-  color: var(--ink);
-  line-height: var(--lh-snug);
-}
-
 /* ==========================================================================
    Buttons — pill, tracked caps, restrained hover
    ========================================================================== */
@@ -1063,26 +1047,6 @@ section { padding-block: var(--sp-9); position: relative; }
 .page-intro { max-width: 68ch; font-size: var(--size-lead); line-height: var(--lh-snug); color: var(--ink-soft); margin-top: var(--sp-4); }
 
 /* ==========================================================================
-   Small icon badge — pairs with the gap items, steps, and outcome lists so
-   they're not just numerals/checkmarks with nothing to look at.
-   ========================================================================== */
-
-.mini-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  margin-bottom: var(--sp-3);
-}
-
-.mini-icon svg { width: 21px; height: 21px; }
-
-/* ==========================================================================
    Stat tiles — real numbers, given room to breathe. Counts up once when
    scrolled into view via [data-count-to] in main.js; static text (like the
    "+") lives in a sibling span so the counting only touches the digits.
@@ -1250,8 +1214,6 @@ section { padding-block: var(--sp-9); position: relative; }
   border-color: var(--line-strong);
   box-shadow: 0 14px 28px -18px rgba(15, 31, 56, 0.4);
 }
-.preview-card:hover .mini-icon { transform: translateY(-2px) scale(1.06); }
-.mini-icon { transition: transform 220ms var(--ease-out-quint); }
 
 .preview-card h3 { font-size: 1.1rem; margin-bottom: var(--sp-2); }
 .preview-card p { font-size: var(--size-small); flex: 1; margin-bottom: var(--sp-4); }
@@ -1269,21 +1231,12 @@ section { padding-block: var(--sp-9); position: relative; }
 .preview-card:hover .preview-link span { transform: translateX(4px); }
 
 /* ==========================================================================
-   Two small custom motions, both transform/opacity only so they stay on the
-   compositor, and both suppressed under prefers-reduced-motion.
+   Link underline sweep - transform only so it stays on the compositor, and
+   suppressed under prefers-reduced-motion.
    ========================================================================== */
 
-/* 1. The icon settles into place just after its card arrives, so the card
-      reads as one gesture rather than everything landing at once. */
-.reveal.is-visible .mini-icon { animation: icon-settle 420ms var(--ease-out-quint) 120ms backwards; }
-
-@keyframes icon-settle {
-  from { opacity: 0; transform: translateY(6px) scale(0.86); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* 2. Link underline sweeps out from the left on hover, and retracts faster
-      than it drew - exits run about three-quarters of the enter duration. */
+/* Sweeps out from the left on hover, and retracts faster than it drew:
+   exits run about three-quarters of the enter duration. */
 .preview-link, .founder-links a, .follow-note a { position: relative; }
 
 .preview-link::after,
@@ -1312,7 +1265,6 @@ section { padding-block: var(--sp-9); position: relative; }
 .founder-links a:hover, .follow-note a:hover { text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal.is-visible .mini-icon { animation: none; }
   .preview-link::after,
   .founder-links a::after,
   .follow-note a::after { transition: none; }
