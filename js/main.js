@@ -168,33 +168,11 @@
   var glow2 = document.getElementById("heroGlow2");
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
 
-  // Entrepreneurial Energy gauge - a fun, entirely made-up dial with no real
-  // metric behind it. Driven by the same scroll percentage computed below.
-  var energyRing = document.getElementById("energyRing");
-  var energyStage = document.getElementById("energyStage");
-  var ENERGY_CIRCUMFERENCE = 169.6;
-  var ENERGY_STAGES = ["Idea", "Building", "Pitching", "Funded!"];
-  var lastEnergyStage = -1;
-
   var heroProgress = 0; // 0 at rest, ->1 as the hero scrolls out of view
 
   function updateScrollDerived() {
     var doc = document.documentElement;
     var scrollTop = doc.scrollTop;
-    var max = doc.scrollHeight - doc.clientHeight;
-    var pct = max > 0 ? Math.min(1, scrollTop / max) : 0;
-
-    if (energyRing) {
-      energyRing.style.strokeDashoffset = ENERGY_CIRCUMFERENCE * (1 - pct);
-      var stageIndex = Math.min(ENERGY_STAGES.length - 1, Math.floor(pct * ENERGY_STAGES.length));
-      if (stageIndex !== lastEnergyStage) {
-        lastEnergyStage = stageIndex;
-        if (energyStage) energyStage.textContent = ENERGY_STAGES[stageIndex];
-        if (stageIndex === ENERGY_STAGES.length - 1) {
-          showToast("You made it to the end. That's more attention than most pitch decks get.");
-        }
-      }
-    }
 
     if (siteHeader) {
       siteHeader.classList.toggle("is-scrolled", scrollTop > 8);
@@ -282,7 +260,7 @@
       octx.textAlign = "center";
       octx.textBaseline = "middle";
       var fontSize = off.height * 0.86;
-      octx.font = "600 " + fontSize + "px Fraunces, Georgia, serif";
+      octx.font = "600 " + fontSize + "px Lora, Georgia, serif";
       octx.fillText("Genesis", off.width / 2, off.height * 0.56);
 
       var data = octx.getImageData(0, 0, off.width, off.height).data;
@@ -607,51 +585,4 @@
     });
   }
 
-  // Cursor trail: a faint line of accent dots follows the pointer everywhere
-  // on the page, not just the hero - the wordmark's motif extended site-wide.
-  // Fine pointer + motion allowed only; a lightweight standalone canvas loop
-  // (independent of the wordmark's own particle system).
-  if (hasFinePointer && !prefersReducedMotion) {
-    var trailCanvas = document.createElement("canvas");
-    trailCanvas.setAttribute("aria-hidden", "true");
-    trailCanvas.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:1499;";
-    document.body.appendChild(trailCanvas);
-    var tctx = trailCanvas.getContext("2d");
-    var trailDpr = Math.min(window.devicePixelRatio || 1, 2);
-    var trailPoints = [];
-    var trailActive = false;
-    var trailHideTimer = null;
-
-    function sizeTrailCanvas() {
-      trailCanvas.width = window.innerWidth * trailDpr;
-      trailCanvas.height = window.innerHeight * trailDpr;
-    }
-    sizeTrailCanvas();
-    window.addEventListener("resize", sizeTrailCanvas, { passive: true });
-
-    document.addEventListener("mousemove", function (e) {
-      trailPoints.push({ x: e.clientX * trailDpr, y: e.clientY * trailDpr, life: 1 });
-      if (trailPoints.length > 26) trailPoints.shift();
-      trailActive = true;
-      clearTimeout(trailHideTimer);
-      trailHideTimer = setTimeout(function () { trailActive = false; }, 700);
-    });
-
-    (function trailFrame() {
-      requestAnimationFrame(trailFrame);
-      tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-      if (!trailActive && !trailPoints.length) return;
-      for (var i = 0; i < trailPoints.length; i++) {
-        var pt = trailPoints[i];
-        pt.life *= 0.93;
-        tctx.globalAlpha = Math.max(0, pt.life * 0.5);
-        tctx.fillStyle = "#4fc3ff";
-        tctx.beginPath();
-        tctx.arc(pt.x, pt.y, 2.2 * trailDpr, 0, Math.PI * 2);
-        tctx.fill();
-      }
-      tctx.globalAlpha = 1;
-      trailPoints = trailPoints.filter(function (pt) { return pt.life > 0.02; });
-    })();
-  }
 })();
