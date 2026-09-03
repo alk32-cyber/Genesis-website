@@ -164,9 +164,18 @@
 
   var siteHeader = document.querySelector(".site-header");
   var hero = document.getElementById("top");
-  var glow1 = document.getElementById("heroGlow1");
-  var glow2 = document.getElementById("heroGlow2");
+  var heroGrid = document.querySelector(".hero-grid");
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
+
+  // Horizontal sequence: a tall section whose inner track slides sideways
+  // while the viewport is pinned to it.
+  var hseq = document.querySelector(".hseq");
+  var hseqTrack = document.querySelector(".hseq-track");
+
+  // Pinned story: the steps light up in turn while the stage holds.
+  var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
+  var pinnedFrames = Array.prototype.slice.call(document.querySelectorAll(".pinned-frame"));
+  var lastPinnedIndex = -1;
 
   var heroProgress = 0; // 0 at rest, ->1 as the hero scrolls out of view
 
@@ -182,8 +191,9 @@
       var rect = hero.getBoundingClientRect();
       heroProgress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.65, 1)));
 
-      if (glow1) glow1.style.transform = "translateY(" + heroProgress * 60 + "px)";
-      if (glow2) glow2.style.transform = "translateY(" + heroProgress * -40 + "px)";
+      // The grid drifts slower than the content in front of it, so the page
+      // has a back plane instead of one flat surface.
+      if (heroGrid) heroGrid.style.transform = "translate3d(0," + heroProgress * 48 + "px,0)";
 
       if (heroFadeEls.length) {
         var fadeOpacity = Math.max(0, 1 - heroProgress * 1.15);
@@ -191,6 +201,55 @@
         for (var i = 0; i < heroFadeEls.length; i++) {
           heroFadeEls[i].style.opacity = fadeOpacity;
           heroFadeEls[i].style.transform = "translateY(" + fadeShift + "px)";
+        }
+      }
+    }
+
+    // --- Horizontal sequence ---------------------------------------------
+    // Distance scrolled through the section maps 1:1 onto how far the track
+    // still has to travel, so the last panel lands exactly as the section
+    // releases. Disabled below 860px, where the track is a stacked list.
+    if (hseq && hseqTrack && window.innerWidth > 860) {
+      var hRect = hseq.getBoundingClientRect();
+      var travel = hseqTrack.scrollWidth - window.innerWidth;
+      if (travel > 0) {
+        var scrollable = hseq.offsetHeight - window.innerHeight;
+        var p = scrollable > 0 ? Math.min(1, Math.max(0, -hRect.top / scrollable)) : 0;
+        hseq.style.setProperty("--hx", (p * travel).toFixed(2));
+      }
+    }
+
+    // Anything that ended up above the viewport without the observer catching
+    // it (fast fling, anchor jump) is revealed here rather than left blank.
+    if (revealEls.length) {
+      for (var r = revealEls.length - 1; r >= 0; r--) {
+        var el = revealEls[r];
+        if (!el.classList.contains("pending")) continue;
+        if (el.getBoundingClientRect().bottom < 0) {
+          el.classList.remove("pending");
+          el.classList.add("is-visible");
+        }
+      }
+    }
+
+    // --- Pinned story -----------------------------------------------------
+    // Whichever step is nearest the middle of the viewport is the active one.
+    if (pinnedSteps.length) {
+      var mid = window.innerHeight * 0.5;
+      var best = 0;
+      var bestDist = Infinity;
+      for (var s = 0; s < pinnedSteps.length; s++) {
+        var r = pinnedSteps[s].getBoundingClientRect();
+        var d = Math.abs(r.top + r.height / 2 - mid);
+        if (d < bestDist) { bestDist = d; best = s; }
+      }
+      if (best !== lastPinnedIndex) {
+        lastPinnedIndex = best;
+        for (var t = 0; t < pinnedSteps.length; t++) {
+          pinnedSteps[t].classList.toggle("is-active", t === best);
+        }
+        for (var f = 0; f < pinnedFrames.length; f++) {
+          pinnedFrames[f].classList.toggle("is-active", f === best);
         }
       }
     }
@@ -235,6 +294,7 @@
     var mouse = { x: -9999, y: -9999, active: false };
     var explodeCurrent = 0;
     var visible = true;
+    var dotRadius = 1.5;
     var accentColor = "#4fc3ff";
 
     function readAccent() {
@@ -264,7 +324,9 @@
       octx.fillText("Genesis", off.width / 2, off.height * 0.56);
 
       var data = octx.getImageData(0, 0, off.width, off.height).data;
-      var step = Math.max(4, Math.round(6 * dpr));
+      var step = Math.min(14, Math.max(4, Math.round(canvas.width / 190)));
+      dotRadius = Math.max(1.1, step * 0.26);
+
       var pts = [];
       for (var y = 0; y < off.height; y += step) {
         for (var x = 0; x < off.width; x += step) {
@@ -342,7 +404,7 @@
 
         ctx.globalAlpha = Math.max(0, 1 - explode * 0.75);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.5 * dpr, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -420,7 +482,56 @@
       buildParticles();
     }
     requestAnimationFrame(frame);
-  })();
+    // Keyboard access for the horizontal sequence: the track is driven by page
+  // scroll, so tabbing to a panel that is currently translated off-screen
+  // would focus something invisible. Focusing a panel scrolls the page to the
+  // point where that panel is on screen, which is the same position a mouse
+  // user would have scrolled to.
+  if (hseq && hseqTrack) {
+    var hseqPanels = Array.prototype.slice.call(hseqTrack.querySelectorAll(".hseq-panel"));
+    hseqPanels.forEach(function (panel, i) {
+      panel.addEventListener("focus", function () {
+        if (window.innerWidth <= 860) return;
+        var travel = hseqTrack.scrollWidth - window.innerWidth;
+        if (travel <= 0) return;
+        var scrollable = hseq.offsetHeight - window.innerHeight;
+        // How far along the track this panel sits, clamped into range.
+        var frac = hseqPanels.length > 1 ? i / (hseqPanels.length - 1) : 0;
+        var target = hseq.offsetTop + frac * scrollable;
+        window.scrollTo({ top: target, behavior: prefersReducedMotion ? "auto" : "smooth" });
+      });
+    });
+  }
+
+  // Page transitions: internal links fade the page out before navigating, so
+  // moving between the five pages reads as one continuous site. The navigation
+  // is what actually matters, so it is scheduled on a timer that fires whether
+  // or not the transition finishes, and modified clicks (new tab, download,
+  // external) are left entirely alone.
+  if (!prefersReducedMotion) {
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest && e.target.closest("a");
+      if (!link) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+      var href = link.getAttribute("href");
+      if (!href || href.charAt(0) === "#" || /^[a-z]+:/i.test(href)) return;
+      if (link.origin !== window.location.origin) return;
+      if (link.pathname === window.location.pathname) return;
+
+      e.preventDefault();
+      document.body.classList.add("is-leaving");
+      setTimeout(function () { window.location.href = link.href; }, 180);
+    });
+
+    // Coming back via the back button restores a faded-out page from the
+    // bfcache, so clear the class on show.
+    window.addEventListener("pageshow", function () {
+      document.body.classList.remove("is-leaving");
+    });
+  }
+})();
 
   // Magnetic buttons + card tilt: fine pointer only, and skipped entirely
   // under reduced motion (continuous mouse-driven movement is exactly what
@@ -585,4 +696,53 @@
     });
   }
 
+  // Keyboard access for the horizontal sequence: the track is driven by page
+  // scroll, so tabbing to a panel that is currently translated off-screen
+  // would focus something invisible. Focusing a panel scrolls the page to the
+  // point where that panel is on screen, which is the same position a mouse
+  // user would have scrolled to.
+  if (hseq && hseqTrack) {
+    var hseqPanels = Array.prototype.slice.call(hseqTrack.querySelectorAll(".hseq-panel"));
+    hseqPanels.forEach(function (panel, i) {
+      panel.addEventListener("focus", function () {
+        if (window.innerWidth <= 860) return;
+        var travel = hseqTrack.scrollWidth - window.innerWidth;
+        if (travel <= 0) return;
+        var scrollable = hseq.offsetHeight - window.innerHeight;
+        // How far along the track this panel sits, clamped into range.
+        var frac = hseqPanels.length > 1 ? i / (hseqPanels.length - 1) : 0;
+        var target = hseq.offsetTop + frac * scrollable;
+        window.scrollTo({ top: target, behavior: prefersReducedMotion ? "auto" : "smooth" });
+      });
+    });
+  }
+
+  // Page transitions: internal links fade the page out before navigating, so
+  // moving between the five pages reads as one continuous site. The navigation
+  // is what actually matters, so it is scheduled on a timer that fires whether
+  // or not the transition finishes, and modified clicks (new tab, download,
+  // external) are left entirely alone.
+  if (!prefersReducedMotion) {
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest && e.target.closest("a");
+      if (!link) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+      var href = link.getAttribute("href");
+      if (!href || href.charAt(0) === "#" || /^[a-z]+:/i.test(href)) return;
+      if (link.origin !== window.location.origin) return;
+      if (link.pathname === window.location.pathname) return;
+
+      e.preventDefault();
+      document.body.classList.add("is-leaving");
+      setTimeout(function () { window.location.href = link.href; }, 180);
+    });
+
+    // Coming back via the back button restores a faded-out page from the
+    // bfcache, so clear the class on show.
+    window.addEventListener("pageshow", function () {
+      document.body.classList.remove("is-leaving");
+    });
+  }
 })();

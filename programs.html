@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;450;500;600;650;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -55,7 +55,7 @@
       <div class="container">
         <div class="program-top reveal">
           <div>
-            <p class="eyebrow">Program</p>
+            <p class="eyebrow">01 / Program</p>
             <h2>High School Head Start Camp</h2>
           </div>
         </div>
@@ -95,24 +95,41 @@
           </ul>
         </div>
 
-        <div class="section-head reveal" style="margin-top: var(--sp-9);">
-          <p class="eyebrow">How It Builds</p>
-          <h2>Each session moves in the same direction: from a real problem to a real pitch.</h2>
+        <div class="section-frame reveal" style="margin-top: var(--sp-10);">
+          <p class="meta">02 / Method</p>
+          <div>
+            <h2>From a real problem to a real pitch.</h2>
+            <p class="lead">Every session moves in the same direction. The stage on the left holds while the three stages pass it.</p>
+          </div>
         </div>
 
-        <div class="steps">
-          <article class="step reveal">
-            <h3>Find something worth solving</h3>
-            <p>Early sessions are spent looking outward before looking at spreadsheets: noticing a real, specific problem worth paying attention to, rather than starting from a business idea in search of a problem.</p>
-          </article>
-          <article class="step reveal">
-            <h3>Build it cheap, test it fast</h3>
-            <p>Once a problem is real, the group sketches a rough answer to it and gets it in front of people quickly, alongside the money side: what it would cost, what it might charge, whether the math survives contact with reality.</p>
-          </article>
-          <article class="step reveal">
-            <h3>Pitch it to the room</h3>
-            <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud, in front of people, which is its own separate skill from having a good idea in the first place.</p>
-          </article>
+        <!-- Pinned story: the stage stays put while the steps advance. -->
+        <div class="pinned">
+          <div class="pinned-visual">
+            <div class="pinned-stage" aria-hidden="true">
+              <div class="pinned-frame is-active"><span>01</span><em>Find the problem</em></div>
+              <div class="pinned-frame"><span>02</span><em>Build it cheap, test it fast</em></div>
+              <div class="pinned-frame"><span>03</span><em>Pitch it to the room</em></div>
+            </div>
+          </div>
+
+          <div class="pinned-steps">
+            <article class="pinned-step is-active">
+              <p class="meta">Stage 01</p>
+              <h3>Find something worth solving</h3>
+              <p>Early sessions are spent looking outward before looking at spreadsheets: noticing a real, specific problem worth paying attention to, rather than starting from a business idea in search of a problem.</p>
+            </article>
+            <article class="pinned-step">
+              <p class="meta">Stage 02</p>
+              <h3>Build it cheap, test it fast</h3>
+              <p>Once a problem is real, the group sketches a rough answer to it and gets it in front of people quickly, alongside the money side: what it would cost, what it might charge, whether the math survives contact with reality.</p>
+            </article>
+            <article class="pinned-step">
+              <p class="meta">Stage 03</p>
+              <h3>Pitch it to the room</h3>
+              <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud, in front of people, which is its own separate skill from having a good idea in the first place.</p>
+            </article>
+          </div>
         </div>
 
         <div class="stat-row reveal">
@@ -133,8 +150,7 @@
         <p class="follow-note">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           Upcoming dates and registration are posted first on
-          <a href="https://www.instagram.com/thegenesisinitiative_austin/" target="_blank" rel="noopener">@thegenesisinitiative_austin</a>.
-        </p>
+          <a href="https://www.instagram.com/thegenesisinitiative_austin/" target="_blank" rel="noopener">@thegenesisinitiative_austin</a>.</p>
 
         <div class="faq-list reveal">
           <div class="faq-item">
@@ -160,8 +176,16 @@
           </div>
         </div>
 
-        <div class="page-next reveal">
-          <a class="btn btn-ghost" href="founders.html">Next: who's behind it <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="container">
+        <p class="meta reveal">Next</p>
+        <p class="closing-line reveal">Dates go out on Instagram <em>before anywhere else.</em></p>
+        <div class="closing-row reveal">
+          <a class="btn btn-primary" href="involved.html">Get involved</a>
+          <p class="meta">Austin, TX / Youth-Led</p>
         </div>
       </div>
     </section>

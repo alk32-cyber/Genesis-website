@@ -34,26 +34,34 @@
   --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
 
   --font-display: "Lora", Georgia, serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --size-h1:     clamp(2rem, 1.3rem + 2.8vw, 3.1rem);
-  --size-h2:     clamp(1.7rem, 1.4rem + 1.2vw, 2.5rem);
-  --size-h3:     clamp(1.15rem, 1.05rem + 0.4vw, 1.375rem);
-  --size-lead:   clamp(1.05rem, 1rem + 0.2vw, 1.2rem);
+  /* Display sizes carry the art direction: this site has no photography, so
+     type is the image. Big jumps between levels, not a timid ramp. */
+  --size-display: clamp(3.2rem, 1.2rem + 9vw, 9rem);
+  --size-h1:     clamp(2.4rem, 1.4rem + 4.2vw, 4.5rem);
+  --size-h2:     clamp(1.9rem, 1.35rem + 2.4vw, 3.25rem);
+  --size-h3:     clamp(1.15rem, 1.05rem + 0.4vw, 1.4rem);
+  --size-lead:   clamp(1.05rem, 1rem + 0.25vw, 1.25rem);
   --size-body:   1.0625rem;
   --size-small:  0.9rem;
-  --size-eyebrow:0.76rem;
+  --size-eyebrow:0.7rem;
+  --size-meta:   0.68rem;
 
-  --lh-tight: 1.14;
-  --lh-snug:  1.35;
-  --lh-body:  1.68;
+  --lh-tight: 1.02;
+  --lh-snug:  1.28;
+  --lh-body:  1.66;
+
+  --track-display: -0.035em;
+  --track-meta: 0.18em;
 
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
   --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px; --sp-10: 128px;
 
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-pill: 999px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-pill: 2px;
 
   --ease: cubic-bezier(0.22, 0.68, 0.24, 1);
   --dur-fast: 160ms;
@@ -67,7 +75,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -89,7 +97,7 @@ body {
   font-weight: 420;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* A quick fade on arrival so moving between pages reads as one continuous
      site rather than a hard browser reload. Short enough to never feel
      like a loading screen - the page is already fully painted underneath. */
@@ -129,7 +137,13 @@ button { font: inherit; cursor: pointer; }
 
 .container { max-width: var(--container); margin-inline: auto; padding-inline: var(--sp-5); }
 
-@media (max-width: 640px) { .container { padding-inline: var(--sp-4); } }
+@media (max-width: 640px) {
+  .container { padding-inline: var(--sp-4); }
+  .hseq-track { padding-inline: var(--sp-4); }
+  /* The mark goes edge to edge on a phone: at this width the gutters cost
+     more presence than the alignment buys. */
+  .wordmark-wrap { padding-inline: 0; }
+}
 
 /* Anchor-jump offset: without this, clicking a nav link lands the section's
    top exactly under the sticky 78px header instead of below it. */
@@ -143,18 +157,38 @@ section { padding-block: var(--sp-9); position: relative; }
 .section-head.center { margin-inline: auto; text-align: center; }
 
 .eyebrow {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  font-family: var(--font-mono);
   font-size: var(--size-eyebrow);
-  font-weight: 650;
-  letter-spacing: 0.16em;
+  font-weight: 500;
+  letter-spacing: var(--track-meta);
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: var(--sp-4);
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-5);
 }
 
-.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+/* A rule that runs out to the edge of the column, not a decorative dot.
+   It ties the label to the underlying grid. */
+.eyebrow::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  min-width: var(--sp-6);
+}
+
+/* Mono metadata: section indices, counters, status labels. */
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--size-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.meta-accent { color: var(--accent); }
 
 .lead { font-size: var(--size-lead); line-height: var(--lh-snug); color: var(--ink-soft); max-width: 58ch; }
 
@@ -171,54 +205,48 @@ section { padding-block: var(--sp-9); position: relative; }
    ========================================================================== */
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
-  padding: 0.95em 1.6em;
-  font-size: 0.8rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  gap: var(--sp-3);
+  padding: 1.05em 1.9em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  border-radius: var(--radius-pill);
-  border: 1.5px solid transparent;
-  transition: transform 180ms var(--ease-out-quint),
-              box-shadow 180ms var(--ease-out-quint),
-              background-color var(--dur-fast) var(--ease),
-              border-color var(--dur-fast) var(--ease),
-              color var(--dur-fast) var(--ease);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  isolation: isolate;
+  transition: color 220ms var(--ease-out-quint),
+              border-color 220ms var(--ease-out-quint),
+              transform 180ms var(--ease-out-quint);
   white-space: nowrap;
 }
 
 .btn { --magx: 0px; --magy: 0px; }
 
-.btn-primary {
-  background: transparent;
-  border-color: var(--accent);
-  color: var(--accent);
+/* The fill wipes up from the baseline rather than the whole box changing
+   colour at once - it reads as one object responding, not a state flip. */
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 320ms var(--ease-out-quint);
 }
 
-.btn-primary:hover {
-  background: var(--accent-soft);
-  transform: translateY(-2px) scale(1.035) translate(var(--magx), var(--magy));
-  box-shadow: 0 10px 30px -12px var(--accent-soft);
-}
+.btn:hover::before, .btn:focus-visible::before { transform: scaleY(1); }
+.btn:hover, .btn:focus-visible { color: var(--accent-ink); border-color: var(--accent); }
+.btn:active { transform: translateY(1px); transition-duration: 100ms; }
 
-.btn-primary:active { transform: translateY(0) scale(0.97); transition-duration: 100ms; }
-
-.btn-ghost {
-  background: rgba(15, 31, 56, 0.03);
-  border-color: var(--line-strong);
-  color: var(--ink);
-}
-
-.btn-ghost:hover {
-  border-color: var(--ink-dim);
-  background: rgba(15, 31, 56, 0.06);
-  transform: translateY(-2px) scale(1.035) translate(var(--magx), var(--magy));
-}
-
-.btn-ghost:active { transform: translateY(0) scale(0.97); transition-duration: 100ms; }
+.btn-primary { background: transparent; border-color: var(--accent); color: var(--accent); }
+.btn-ghost   { background: transparent; border-color: var(--line-strong); color: var(--ink); }
 
 .btn svg { width: 14px; height: 14px; flex: none; }
 
@@ -372,36 +400,48 @@ section { padding-block: var(--sp-9); position: relative; }
    Hero — the wordmark is the visual moment, not a stock illustration
    ========================================================================== */
 
-/* Each nav destination is now its own page (index/why/programs/founders/
-   involved.html) rather than an anchored section on one long page - see
-   the "page-jump" and "page-next" links for how you move between them.
-   #programs and #founders each get their own full-page tone. */
+/* Each nav destination is its own page (index/why/programs/founders/
+   involved.html). The home page's horizontal sequence and each page's
+   closing block are how you move between them. */
 #programs { background: var(--bg); }
 #founders { background: var(--bg-raised); }
 
 .hero {
-  padding-block: var(--sp-9) var(--sp-10);
+  padding-block: var(--sp-8) var(--sp-9);
   position: relative;
   overflow: hidden;
   background: var(--bg);
-  text-align: center;
+  min-height: min(88vh, 820px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-/* Parallax glow layers — real elements (not a flat background gradient) so
-   scroll can nudge them at their own pace for a sense of depth. */
-.hero-glow {
+/* The grid is the background. Four hairline columns, drawn once, that every
+   section aligns to - depth from structure rather than from coloured haze.
+   Parallaxed a few px on scroll so the page has a back plane. */
+.hero-grid {
   position: absolute;
-  inset: -10% -10% auto -10%;
-  height: 130%;
+  inset: -5% 0 auto 0;
+  height: 115%;
   pointer-events: none;
   z-index: 0;
   will-change: transform;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--sp-5);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
-.hero-glow-1 { background: radial-gradient(1200px 640px at 12% -12%, rgba(79, 195, 255, 0.24), transparent 60%); }
-.hero-glow-2 { background: radial-gradient(900px 560px at 92% 6%, rgba(47, 163, 230, 0.14), transparent 55%); }
+.hero-grid span { border-left: 1px solid var(--line); }
+.hero-grid span:last-child { border-right: 1px solid var(--line); }
 
-.hero-inner { position: relative; z-index: 1; max-width: 1040px; margin-inline: auto; }
+@media (max-width: 700px) {
+  .hero-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.hero-inner { position: relative; z-index: 1; width: 100%; }
 
 /* Set directly per animation frame from scroll position (see main.js) - no
    CSS transition here on purpose, so it tracks the scroll 1:1 instead of
@@ -423,101 +463,11 @@ section { padding-block: var(--sp-9); position: relative; }
   padding-inline: var(--sp-5);
   box-sizing: border-box;
   position: relative;
-  margin-top: var(--sp-3);
+  margin-block: var(--sp-6) 0;
 }
 
 .wordmark, .wordmark-canvas { width: 100%; display: block; height: auto; }
 .wordmark-canvas { touch-action: pan-y; cursor: pointer; }
-
-.hero-tagline {
-  margin-top: var(--sp-5);
-  font-size: 0.82rem;
-  font-weight: 650;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.hero-tagline strong { color: var(--ink); font-weight: 700; }
-
-.hero-lead {
-  margin: var(--sp-6) auto 0;
-  max-width: 56ch;
-  font-size: var(--size-lead);
-  line-height: var(--lh-snug);
-  color: var(--ink-soft);
-}
-
-.hero-actions {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  margin-top: var(--sp-7);
-}
-
-.fact-strip {
-  margin-top: var(--sp-9);
-  display: flex;
-  justify-content: center;
-  gap: var(--sp-8);
-  flex-wrap: wrap;
-}
-
-.fact-strip div { text-align: center; }
-
-.fact-strip strong {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  color: var(--ink);
-  margin-bottom: 2px;
-}
-
-.fact-strip span {
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.fact-strip .divider {
-  width: 1px;
-  align-self: stretch;
-  background: var(--line-strong);
-}
-
-@media (max-width: 700px) {
-  .fact-strip { gap: var(--sp-5); }
-  .fact-strip .divider { display: none; }
-}
-
-/* Quick links out of the hero to each page - since the site is now
-   separate pages rather than anchored sections, this is how you actually
-   get anywhere from home besides the header nav. */
-.page-jump {
-  margin-top: var(--sp-8);
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-6);
-}
-
-.page-jump a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--size-small);
-  font-weight: 600;
-  color: var(--ink-soft);
-  padding-block: var(--sp-1);
-  border-bottom: 1.5px solid transparent;
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-
-.page-jump a:hover { color: var(--accent); border-color: var(--accent); }
-.page-jump a span { transition: transform var(--dur-fast) var(--ease); }
-.page-jump a:hover span { transform: translateX(3px); }
 
 /* "Next page" link at the foot of each page's content - keeps the site
    feeling like one continuous story even though each stop is a real,
@@ -544,8 +494,8 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .gap-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  max-width: 760px;
+  grid-template-columns: minmax(0, 780px);
+  justify-content: start;
 }
 
 .gap-headline { margin-bottom: var(--sp-6); }
@@ -1271,3 +1221,319 @@ section { padding-block: var(--sp-9); position: relative; }
 }
 
 .skip-link:focus { left: var(--sp-4); top: var(--sp-4); }
+
+/* ==========================================================================
+   EDITORIAL LAYER
+   The site has no photography, so structure and type carry the art direction:
+   a stated grid, mono metadata, asymmetric composition, and scroll that
+   actually moves the composition rather than fading blocks in.
+   ========================================================================== */
+
+/* --- Hero composition: metadata pinned to the corners, wordmark centred,
+       supporting copy offset right so nothing sits on the centre axis
+       except the name itself. --- */
+
+.hero-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-6);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-8);
+}
+
+.hero-meta .meta + .meta { text-align: right; }
+
+@media (max-width: 640px) {
+  .hero-meta { flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+  .hero-meta .meta + .meta { text-align: left; }
+}
+
+.hero-foot {
+  margin-top: var(--sp-7);
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 42%);
+  gap: var(--sp-8);
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .hero-foot { grid-template-columns: 1fr; gap: var(--sp-6); }
+}
+
+/* The tagline is the one piece of display type competing with the wordmark,
+   so it is set tight and sentence case - not another row of tracked caps. */
+.hero-tagline {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 1rem + 2.2vw, 2.7rem);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.025em;
+  text-transform: none;
+  color: var(--ink);
+  max-width: 14ch;
+  margin: 0;
+}
+
+.hero-tagline strong { font-weight: 600; font-style: italic; color: var(--accent); }
+
+.hero-lead { font-size: var(--size-body); line-height: var(--lh-body); color: var(--ink-soft); max-width: 44ch; }
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+
+/* Scroll cue: a hairline that draws down, then resets. Reads as an
+   instruction, not decoration. */
+.scroll-cue {
+  margin-top: var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.scroll-cue::after {
+  content: "";
+  width: 1px;
+  height: 46px;
+  background: var(--line-strong);
+  transform-origin: top;
+  animation: cue-draw 2.4s var(--ease-in-out-cubic) infinite;
+}
+
+@keyframes cue-draw {
+  0%, 100% { transform: scaleY(0.25); opacity: 0.5; }
+  50%      { transform: scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) { .scroll-cue::after { animation: none; } }
+
+/* --- Section framing: an index number and a rule, aligned to the grid. --- */
+
+.section-frame {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--ink);
+  margin-bottom: var(--sp-8);
+}
+
+@media (max-width: 700px) {
+  .section-frame { grid-template-columns: 1fr; gap: var(--sp-3); }
+}
+
+.section-frame h2 { font-size: var(--size-h2); line-height: var(--lh-tight); letter-spacing: -0.025em; max-width: 20ch; }
+.section-frame .lead { margin-top: var(--sp-5); }
+
+/* --- Horizontal sequence: vertical scroll drives a lateral track. The
+       section is tall, the viewport pins to it, and --hx (set from the
+       scroll pass in main.js) translates the track. --- */
+
+/* Tall enough that the pinned viewport has room to drive the track all the
+   way across before the section releases. */
+.hseq { padding: 0; background: var(--bg); border-top: 1px solid var(--line); height: 300vh; }
+
+@media (max-width: 860px) { .hseq { height: auto; } }
+
+.hseq-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hseq-head {
+  max-width: var(--container);
+  margin-inline: auto;
+  width: 100%;
+  padding-inline: var(--sp-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-6);
+}
+
+.hseq-track {
+  display: flex;
+  gap: 0;
+  will-change: transform;
+  transform: translate3d(calc(var(--hx, 0) * -1px), 0, 0);
+  /* Lead-in matches the container gutter so the first panel starts on the
+     same grid line as everything else on the page, not at the window edge. */
+  padding-inline: max((100vw - var(--container)) / 2, var(--sp-5));
+}
+
+.hseq-panel {
+  flex: 0 0 min(46vw, 520px);
+  padding: var(--sp-8) var(--sp-7);
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: min(52vh, 420px);
+}
+
+.hseq-panel:last-child { border-right: 1px solid var(--line); }
+
+.hseq-panel h3 {
+  font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.6rem);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.03em;
+  margin-block: var(--sp-5) var(--sp-4);
+}
+
+.hseq-panel p { font-size: var(--size-small); max-width: 32ch; }
+
+.hseq-panel .hseq-go {
+  margin-top: var(--sp-7);
+  font-family: var(--font-mono);
+  font-size: var(--size-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.hseq-panel .hseq-go span { transition: transform 220ms var(--ease-out-quint); }
+.hseq-panel:hover .hseq-go span { transform: translateX(6px); }
+
+/* The whole panel is the target, so the number shifts too - the panel reads
+   as one object rather than a card with a link inside it. */
+.hseq-panel .hseq-num { transition: color 220ms var(--ease-out-quint); }
+.hseq-panel:hover .hseq-num { color: var(--accent); }
+
+@media (max-width: 860px) {
+  /* Below the pinning breakpoint this becomes an ordinary stacked list -
+     horizontal scroll hijacking on a phone is worse than no effect. */
+  .hseq-sticky { position: static; height: auto; }
+  .hseq-track { transform: none; flex-direction: column; }
+  /* Stacked layout still needs the page gutter the pinned track got from
+     its lead-in padding. */
+  .hseq-track { padding-inline: var(--sp-5); max-width: var(--container); margin-inline: auto; }
+  .hseq-panel { flex: 1 1 auto; min-height: 0; border-left: none; border-top: 1px solid var(--line); padding-inline: 0; }
+  .hseq-panel p { max-width: none; }
+  .hseq-panel:last-child { border-right: none; }
+  .hseq-head { flex-direction: column; gap: var(--sp-2); }
+}
+
+/* --- Pinned story: the visual holds while the steps advance past it. --- */
+
+.pinned { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-9); }
+
+@media (max-width: 860px) { .pinned { grid-template-columns: 1fr; gap: var(--sp-6); } }
+
+.pinned-visual {
+  position: sticky;
+  top: 22vh;
+  height: fit-content;
+  align-self: start;
+}
+
+@media (max-width: 860px) { .pinned-visual { position: static; } }
+
+.pinned-stage {
+  border: 1px solid var(--line);
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-raised);
+}
+
+/* Each stage frame is a numeral drawn large; the active one is opaque.
+   No imagery to fake, so the "visual" is typographic. */
+.pinned-frame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 420ms var(--ease-out-quint), transform 420ms var(--ease-out-quint);
+}
+
+.pinned-frame.is-active { opacity: 1; transform: none; }
+
+.pinned-frame span {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 3rem + 10vw, 11rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+  opacity: 0.16;
+}
+
+.pinned-frame em {
+  position: absolute;
+  bottom: var(--sp-6);
+  left: var(--sp-6);
+  right: var(--sp-6);
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: var(--size-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pinned-steps { display: flex; flex-direction: column; }
+
+.pinned-step {
+  padding-block: var(--sp-8);
+  border-top: 1px solid var(--line);
+  opacity: 0.42;
+  transition: opacity 420ms var(--ease-out-quint);
+}
+
+.pinned-step.is-active { opacity: 1; }
+.pinned-step h3 { font-size: var(--size-h3); margin-block: var(--sp-3) var(--sp-3); }
+.pinned-step p { font-size: var(--size-small); max-width: 46ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pinned-step { opacity: 1; }
+  .pinned-frame { transition: none; }
+}
+
+/* --- Closing statement: the page ends on a real note, not a link row. --- */
+
+.closing {
+  border-top: 1px solid var(--ink);
+  padding-block: var(--sp-10) var(--sp-9);
+  background: var(--bg);
+}
+
+@media (max-width: 800px) { .closing { padding-block: var(--sp-8) var(--sp-7); } }
+
+.closing-line {
+  font-family: var(--font-display);
+  font-size: var(--size-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  max-width: 15ch;
+  margin-bottom: var(--sp-7);
+}
+
+.closing-line em { font-style: italic; color: var(--accent); }
+
+.closing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+/* --- Page transitions: a fast wipe out on internal navigation. The class
+       is added on link click and the browser navigates once it finishes,
+       so a failed/blocked JS path still navigates normally. --- */
+
+body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic); }
+
+@media (prefers-reduced-motion: reduce) { body.is-leaving { opacity: 1; transition: none; } }

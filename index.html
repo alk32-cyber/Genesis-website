@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;450;500;600;650;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -52,11 +52,13 @@
   </header>
   <main id="main">
     <section class="hero" id="top">
-      <div class="hero-glow hero-glow-1" id="heroGlow1" aria-hidden="true"></div>
-      <div class="hero-glow hero-glow-2" id="heroGlow2" aria-hidden="true"></div>
+      <div class="hero-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 
       <div class="container hero-inner">
-        <p class="eyebrow hero-fade">Austin, Texas &middot; Youth-Led Nonprofit</p>
+        <div class="hero-meta hero-fade">
+          <p class="meta">Austin, Texas / Youth-Led Nonprofit</p>
+          <p class="meta">Entrepreneurship &amp; Financial Literacy</p>
+        </div>
 
         <div class="wordmark-wrap" id="wordmarkWrap">
           <svg class="wordmark" id="wordmarkSvg" viewBox="0 0 920 190" role="img" aria-label="Genesis">
@@ -69,62 +71,86 @@
           </svg>
         </div>
 
-        <p class="hero-tagline hero-fade">Taught by teens. <strong>Built for teens.</strong></p>
+        <div class="hero-foot">
+          <div>
+            <p class="hero-tagline">Taught by teens. <strong>Built for teens.</strong></p>
+            <div class="hero-actions">
+              <a class="btn btn-primary chargeable" href="programs.html">
+                <span class="charge-ring" aria-hidden="true"></span>
+                <span class="btn-label">See the program</span>
+              </a>
+              <a class="btn btn-ghost" href="involved.html">Get involved</a>
+            </div>
+          </div>
 
-        <p class="hero-lead hero-fade">
-          A youth-led nonprofit in Austin, teaching middle and high schoolers the
-          fundamentals of entrepreneurship and money in camps and workshops built and
-          run entirely by teenagers.
-        </p>
-
-        <div class="hero-actions">
-          <a class="btn btn-primary chargeable" href="programs.html">
-            <span class="charge-ring" aria-hidden="true"></span>
-            <span class="btn-label">See our programs</span>
-          </a>
-          <a class="btn btn-ghost" href="https://www.instagram.com/thegenesisinitiative_austin/" target="_blank" rel="noopener">Follow on Instagram</a>
+          <div class="hero-fade">
+            <p class="hero-lead">
+              A youth-led nonprofit in Austin, teaching middle and high schoolers the
+              fundamentals of entrepreneurship and money in camps and workshops built
+              and run entirely by teenagers.
+            </p>
+            <p class="scroll-cue meta">Scroll</p>
+          </div>
         </div>
-
-        <div class="fact-strip hero-fade">
-          <div><strong>Peer-led</strong><span>Taught by teen founders</span></div>
-          <div class="divider"></div>
-          <div><strong>Austin, TX</strong><span>Greater Austin area</span></div>
-        </div>
-
       </div>
     </section>
 
-    <section class="preview-section">
-      <div class="container">
-        <div class="section-head reveal">
-          <p class="eyebrow">Around The Site</p>
-          <h2>Four pages. One thing in common: teens are running the show.</h2>
+    <!-- Vertical scroll drives this track sideways. Four destinations read as
+         one continuous sequence rather than four cards in a row. -->
+    <section class="hseq" id="sequence">
+      <div class="hseq-sticky">
+        <div class="hseq-head">
+          <p class="meta">Index / Four Parts</p>
+          <p class="meta meta-accent">Keep scrolling</p>
         </div>
 
-        <div class="preview-grid">
-          <article class="preview-card reveal">
-            <h3>Why Genesis</h3>
-            <p>The gap in traditional entrepreneurship education, and why a fully youth-led model closes it.</p>
-            <a class="preview-link" href="why.html">Read the reasoning <span aria-hidden="true">&rarr;</span></a>
-          </article>
+        <div class="hseq-track">
+          <a class="hseq-panel" href="why.html">
+            <p class="meta hseq-num">01 / Why</p>
+            <div>
+              <h3>The gap school leaves open</h3>
+              <p>Most students meet entrepreneurship in a college elective, if at all. Genesis starts years earlier.</p>
+            </div>
+            <p class="hseq-go">Read the reasoning <span aria-hidden="true">&rarr;</span></p>
+          </a>
 
-          <article class="preview-card reveal">
-            <h3>Programs</h3>
-            <p>What actually happens at the High School Head Start Camp, week to week and skill by skill.</p>
-            <a class="preview-link" href="programs.html">See the curriculum <span aria-hidden="true">&rarr;</span></a>
-          </article>
+          <a class="hseq-panel" href="programs.html">
+            <p class="meta hseq-num">02 / Program</p>
+            <div>
+              <h3>From a real problem to a real pitch</h3>
+              <p>What actually happens at the High School Head Start Camp, session by session.</p>
+            </div>
+            <p class="hseq-go">See the program <span aria-hidden="true">&rarr;</span></p>
+          </a>
 
-          <article class="preview-card reveal">
-            <h3>Founders</h3>
-            <p>Meet the two students who founded Genesis and still run it day to day.</p>
-            <a class="preview-link" href="founders.html">Meet the team <span aria-hidden="true">&rarr;</span></a>
-          </article>
+          <a class="hseq-panel" href="founders.html">
+            <p class="meta hseq-num">03 / Founders</p>
+            <div>
+              <h3>Two students, running it themselves</h3>
+              <p>The people who founded Genesis and still teach it, with no adult board above them.</p>
+            </div>
+            <p class="hseq-go">Meet them <span aria-hidden="true">&rarr;</span></p>
+          </a>
 
-          <article class="preview-card reveal">
-            <h3>Get Involved</h3>
-            <p>Three concrete ways in, whether you're a student, a parent, or a school looking to partner.</p>
-            <a class="preview-link" href="involved.html">Find your way in <span aria-hidden="true">&rarr;</span></a>
-          </article>
+          <a class="hseq-panel" href="involved.html">
+            <p class="meta hseq-num">04 / Involved</p>
+            <div>
+              <h3>Three ways in</h3>
+              <p>Enroll a student, partner with the team, or follow along for camp dates.</p>
+            </div>
+            <p class="hseq-go">Find your way in <span aria-hidden="true">&rarr;</span></p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="container">
+        <p class="meta reveal">Next</p>
+        <p class="closing-line reveal">Start where every student here started: <em>a message.</em></p>
+        <div class="closing-row reveal">
+          <a class="btn btn-primary" href="involved.html">Get involved</a>
+          <p class="meta">Instagram / @thegenesisinitiative_austin</p>
         </div>
       </div>
     </section>
