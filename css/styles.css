@@ -139,7 +139,6 @@ button { font: inherit; cursor: pointer; }
 
 @media (max-width: 640px) {
   .container { padding-inline: var(--sp-4); }
-  .hseq-track { padding-inline: var(--sp-4); }
   /* The mark goes edge to edge on a phone: at this width the gutters cost
      more presence than the alignment buys. */
   .wordmark-wrap { padding-inline: 0; }
@@ -415,30 +414,6 @@ section { padding-block: var(--sp-9); position: relative; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-
-/* The grid is the background. Four hairline columns, drawn once, that every
-   section aligns to - depth from structure rather than from coloured haze.
-   Parallaxed a few px on scroll so the page has a back plane. */
-.hero-grid {
-  position: absolute;
-  inset: -5% 0 auto 0;
-  height: 115%;
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform;
-  max-width: var(--container);
-  margin-inline: auto;
-  padding-inline: var(--sp-5);
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.hero-grid span { border-left: 1px solid var(--line); }
-.hero-grid span:last-child { border-right: 1px solid var(--line); }
-
-@media (max-width: 700px) {
-  .hero-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .hero-inner { position: relative; z-index: 1; width: 100%; }
@@ -1324,101 +1299,58 @@ section { padding-block: var(--sp-9); position: relative; }
 .section-frame h2 { font-size: var(--size-h2); line-height: var(--lh-tight); letter-spacing: -0.025em; max-width: 20ch; }
 .section-frame .lead { margin-top: var(--sp-5); }
 
-/* --- Horizontal sequence: vertical scroll drives a lateral track. The
-       section is tall, the viewport pins to it, and --hx (set from the
-       scroll pass in main.js) translates the track. --- */
+/* --- Index list: one full-width row per destination, separated by rules.
+       Vertical only - the row is the link, and hovering moves the whole row
+       rather than lighting up a button inside a card. --- */
 
-/* Tall enough that the pinned viewport has room to drive the track all the
-   way across before the section releases. */
-.hseq { padding: 0; background: var(--bg); border-top: 1px solid var(--line); height: 300vh; }
+.index-list { border-top: 1px solid var(--ink); }
 
-@media (max-width: 860px) { .hseq { height: auto; } }
-
-.hseq-sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.hseq-head {
-  max-width: var(--container);
-  margin-inline: auto;
-  width: 100%;
-  padding-inline: var(--sp-5);
-  display: flex;
-  justify-content: space-between;
+.index-row {
+  display: grid;
+  grid-template-columns: 8rem 1fr auto;
+  gap: var(--sp-6);
   align-items: baseline;
-  gap: var(--sp-5);
-  padding-bottom: var(--sp-6);
+  padding-block: var(--sp-7);
+  border-bottom: 1px solid var(--line);
+  transition: background-color 260ms var(--ease-out-quint);
 }
 
-.hseq-track {
-  display: flex;
-  gap: 0;
-  will-change: transform;
-  transform: translate3d(calc(var(--hx, 0) * -1px), 0, 0);
-  /* Lead-in matches the container gutter so the first panel starts on the
-     same grid line as everything else on the page, not at the window edge. */
-  padding-inline: max((100vw - var(--container)) / 2, var(--sp-5));
-}
+.index-row:hover { background: var(--accent-soft); }
 
-.hseq-panel {
-  flex: 0 0 min(46vw, 520px);
-  padding: var(--sp-8) var(--sp-7);
-  border-left: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: min(52vh, 420px);
-}
-
-.hseq-panel:last-child { border-right: 1px solid var(--line); }
-
-.hseq-panel h3 {
-  font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.6rem);
+.index-row h3 {
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
   line-height: var(--lh-tight);
   letter-spacing: -0.03em;
-  margin-block: var(--sp-5) var(--sp-4);
+  margin-bottom: var(--sp-3);
+  transition: transform 320ms var(--ease-out-quint);
 }
 
-.hseq-panel p { font-size: var(--size-small); max-width: 32ch; }
+/* The title leads, the rest of the row follows it. */
+.index-row:hover h3 { transform: translateX(10px); }
 
-.hseq-panel .hseq-go {
-  margin-top: var(--sp-7);
+.index-row p { font-size: var(--size-small); max-width: 52ch; }
+.index-row .index-num { transition: color 260ms var(--ease-out-quint); }
+.index-row:hover .index-num { color: var(--accent); }
+
+.index-go {
   font-family: var(--font-mono);
   font-size: var(--size-meta);
   letter-spacing: var(--track-meta);
   text-transform: uppercase;
   color: var(--accent);
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
 }
 
-.hseq-panel .hseq-go span { transition: transform 220ms var(--ease-out-quint); }
-.hseq-panel:hover .hseq-go span { transform: translateX(6px); }
+.index-go span { transition: transform 260ms var(--ease-out-quint); }
+.index-row:hover .index-go span { transform: translateX(8px); }
 
-/* The whole panel is the target, so the number shifts too - the panel reads
-   as one object rather than a card with a link inside it. */
-.hseq-panel .hseq-num { transition: color 220ms var(--ease-out-quint); }
-.hseq-panel:hover .hseq-num { color: var(--accent); }
-
-@media (max-width: 860px) {
-  /* Below the pinning breakpoint this becomes an ordinary stacked list -
-     horizontal scroll hijacking on a phone is worse than no effect. */
-  .hseq-sticky { position: static; height: auto; }
-  .hseq-track { transform: none; flex-direction: column; }
-  /* Stacked layout still needs the page gutter the pinned track got from
-     its lead-in padding. */
-  .hseq-track { padding-inline: var(--sp-5); max-width: var(--container); margin-inline: auto; }
-  .hseq-panel { flex: 1 1 auto; min-height: 0; border-left: none; border-top: 1px solid var(--line); padding-inline: 0; }
-  .hseq-panel p { max-width: none; }
-  .hseq-panel:last-child { border-right: none; }
-  .hseq-head { flex-direction: column; gap: var(--sp-2); }
+@media (max-width: 760px) {
+  .index-row { grid-template-columns: 1fr; gap: var(--sp-3); padding-block: var(--sp-6); }
+  .index-row:hover h3 { transform: none; }
+  .index-row p { max-width: none; }
 }
 
 /* --- Pinned story: the visual holds while the steps advance past it. --- */
