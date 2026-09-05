@@ -486,6 +486,165 @@
       document.body.classList.remove("is-leaving");
     });
   }
+  // ==========================================================================
+  // Liquid reveal (home hero). A soft radial brush stamps a second field over
+  // the base along the pointer trail, and the trail decays every frame.
+  // There is no photography for this site, so rather than fake any, both
+  // layers are generated: a pale dot field and a deep navy one beneath it.
+  // ==========================================================================
+  (function liquidReveal(){
+    var wrap = document.querySelector(".liquid");
+    if (!wrap || prefersReducedMotion) return;
+
+    var base  = wrap.querySelector(".liquid-base");
+    var brush = wrap.querySelector(".liquid-brush");
+    if (!base || !brush) return;
+
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var ctx = brush.getContext("2d");
+    if (!ctx) return;
+
+    var BRUSH_RADIUS = 143, DECAY = 0.016, IDLE_FRAMES = 120;
+    var radius = BRUSH_RADIUS * dpr;
+    var cover = document.createElement("canvas");
+    var stampC = document.createElement("canvas");
+    var points = [], last = null, idle = 0, W = 0, H = 0;
+
+    // Gradient ground plus a jittered grid of dots - the same motif as the
+    // wordmark, so the revealed layer belongs to the same brand.
+    function paintField(canvas, o){
+      var g = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
+      var grad = g.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, o.from); grad.addColorStop(1, o.to);
+      g.fillStyle = grad; g.fillRect(0, 0, w, h);
+      var step = o.step * dpr, r = o.r * dpr;
+      g.fillStyle = o.dot;
+      for (var y = step / 2; y < h; y += step) {
+        for (var x = step / 2; x < w; x += step) {
+          var jx = Math.sin(x * 0.7 + y * 1.3) * step * 0.18;
+          var jy = Math.cos(x * 1.1 - y * 0.6) * step * 0.18;
+          g.beginPath(); g.arc(x + jx, y + jy, r, 0, Math.PI * 2); g.fill();
+        }
+      }
+    }
+
+    function size(){
+      var rect = wrap.getBoundingClientRect();
+      W = Math.max(1, Math.round(rect.width * dpr));
+      H = Math.max(1, Math.round(rect.height * dpr));
+      [base, brush].forEach(function (c) {
+        c.width = W; c.height = H;
+        c.style.width = rect.width + "px"; c.style.height = rect.height + "px";
+      });
+      radius = BRUSH_RADIUS * dpr;
+      paintField(base,  { from:"#eef3fa", to:"#dce7f6", step:26, r:1.6, dot:"rgba(26,86,219,0.15)" });
+      cover.width = W; cover.height = H;
+      paintField(cover, { from:"#0b1729", to:"#12325f", step:22, r:2.0, dot:"rgba(120,180,255,0.55)" });
+      var d = Math.ceil(radius * 2);
+      stampC.width = d; stampC.height = d;
+      ctx.clearRect(0, 0, W, H);
+    }
+
+    size();
+    if (window.ResizeObserver) new ResizeObserver(size).observe(wrap);
+    else window.addEventListener("resize", size, { passive: true });
+
+    function stamp(x, y){
+      var d = stampC.width, c = d / 2, g = stampC.getContext("2d");
+      g.clearRect(0, 0, d, d);
+      g.globalCompositeOperation = "source-over";
+      var grad = g.createRadialGradient(c, c, 0, c, c, c);
+      grad.addColorStop(0,    "rgba(255,255,255,1)");
+      grad.addColorStop(0.55, "rgba(255,255,255,0.82)");
+      grad.addColorStop(1,    "rgba(255,255,255,0)");
+      g.fillStyle = grad; g.fillRect(0, 0, d, d);
+      g.globalCompositeOperation = "source-in";
+      g.drawImage(cover, x - c, y - c, d, d, 0, 0, d, d);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(stampC, x - c, y - c);
+    }
+
+    window.addEventListener("pointermove", function (e) {
+      var rect = brush.getBoundingClientRect();
+      var x = (e.clientX - rect.left) * dpr;
+      var y = (e.clientY - rect.top) * dpr;
+      if (x < -radius || y < -radius || x > W + radius || y > H + radius) { last = null; return; }
+      if (last) {
+        var dx = x - last.x, dy = y - last.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var step = Math.max(radius * 0.3, 1);
+        var n = Math.min(Math.ceil(dist / step), 60);
+        for (var i = 1; i <= n; i++) points.push({ x: last.x + dx * (i / n), y: last.y + dy * (i / n) });
+      } else points.push({ x: x, y: y });
+      last = { x: x, y: y };
+    }, { passive: true });
+
+    (function tick(){
+      requestAnimationFrame(tick);
+      var drawing = points.length > 0;
+      if (drawing) idle = 0; else if (++idle > IDLE_FRAMES) return;
+
+      var fade = drawing ? DECAY : Math.min(DECAY + idle * 0.004, 0.5);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0,0,0," + fade + ")";
+      ctx.fillRect(0, 0, W, H);
+
+      if (drawing) { for (var i = 0; i < points.length; i++) stamp(points[i].x, points[i].y); points = []; }
+      else if (idle === IDLE_FRAMES) ctx.clearRect(0, 0, W, H);
+    })();
+  })();
+
+  // ==========================================================================
+  // Hero fact carousel: click the card or the arrows to cycle. Wraps both ways.
+  // ==========================================================================
+  (function factCard(){
+    var slot = document.getElementById("factSlot");
+    if (!slot) return;
+    var dots = document.getElementById("factDots");
+    var row  = document.getElementById("factRow");
+    var items = [
+      { cap: "Peer-taught",   ttl: "Teens design it and teach it." },
+      { cap: "One program",   ttl: "Ideas and money, never split apart." },
+      { cap: "Every session", ttl: "Ends with a real pitch." }
+    ];
+    var i = 0;
+
+    dots.innerHTML = items.map(function (_, k) { return "<i" + (k === 0 ? ' class="on"' : "") + "></i>"; }).join("");
+
+    function render(idx, dir){
+      var item = items[idx];
+      var incoming = document.createElement("div");
+      incoming.className = "factcard-item";
+      incoming.innerHTML = '<p class="factcard-cap">' + item.cap + '</p>' +
+                           '<p class="factcard-ttl">' + item.ttl + '</p>';
+      if (!prefersReducedMotion) {
+        incoming.style.transform = "translateY(" + (dir > 0 ? 14 : -14) + "px)";
+        incoming.style.opacity = "0";
+      }
+      var outgoing = slot.querySelector(".factcard-item");
+      slot.appendChild(incoming);
+      requestAnimationFrame(function () {
+        incoming.style.transform = "none"; incoming.style.opacity = "1";
+        if (outgoing) {
+          outgoing.style.transform = "translateY(" + (dir > 0 ? -14 : 14) + "px)";
+          outgoing.style.opacity = "0";
+          setTimeout(function () { outgoing.remove(); }, 520);
+        }
+      });
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle("on", k === idx); });
+    }
+
+    function move(step){ i = (i + step + items.length) % items.length; render(i, step); }
+    render(0, 1);
+
+    document.getElementById("factNext").addEventListener("click", function (e) { e.stopPropagation(); move(1); });
+    document.getElementById("factPrev").addEventListener("click", function (e) { e.stopPropagation(); move(-1); });
+    row.addEventListener("click", function () { move(1); });
+    row.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); move(1); }
+    });
+  })();
+
 })();
 
   // Magnetic buttons + card tilt: fine pointer only, and skipped entirely

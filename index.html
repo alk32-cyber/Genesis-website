@@ -52,6 +52,13 @@
   </header>
   <main id="main">
     <section class="hero" id="top">
+      <!-- Liquid reveal: move the pointer and a second field paints in. -->
+      <div class="liquid" aria-hidden="true">
+        <canvas class="liquid-base"></canvas>
+        <canvas class="liquid-brush"></canvas>
+      </div>
+      <div class="hero-scrim" aria-hidden="true"></div>
+
       <div class="container hero-inner">
         <div class="hero-meta hero-fade">
           <p class="meta">Austin, Texas / Youth-Led Nonprofit</p>
@@ -70,8 +77,13 @@
         </div>
 
         <div class="hero-foot">
-          <div>
+          <div class="hero-main">
             <p class="hero-tagline">Taught by teens. <strong>Built for teens.</strong></p>
+            <p class="hero-lead">
+              A youth-led nonprofit in Austin, teaching middle and high schoolers the
+              fundamentals of entrepreneurship and money in camps and workshops built
+              and run entirely by teenagers.
+            </p>
             <div class="hero-actions">
               <a class="btn btn-primary chargeable" href="programs.html">
                 <span class="charge-ring" aria-hidden="true"></span>
@@ -79,27 +91,145 @@
               </a>
               <a class="btn btn-ghost" href="involved.html">Get involved</a>
             </div>
+            <p class="scroll-cue meta">Scroll</p>
           </div>
 
-          <div class="hero-fade">
-            <p class="hero-lead">
-              A youth-led nonprofit in Austin, teaching middle and high schoolers the
-              fundamentals of entrepreneurship and money in camps and workshops built
-              and run entirely by teenagers.
-            </p>
-            <p class="scroll-cue meta">Scroll</p>
+          <div class="hero-side hero-fade">
+            <!-- Not a <button>: the prev/next controls are buttons and those
+                 cannot be nested inside another one. -->
+            <div class="factcard">
+              <div class="factcard-row" id="factRow" role="button" tabindex="0" aria-label="Next fact">
+                <span class="factcard-tile" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg>
+                </span>
+                <div class="factcard-panel">
+                  <div class="factcard-slot" id="factSlot"></div>
+                  <div class="factcard-bot">
+                    <span class="factcard-dots" id="factDots" aria-hidden="true"></span>
+                    <span class="factcard-navs">
+                      <button id="factPrev" type="button" aria-label="Previous fact"><svg viewBox="0 0 24 24" style="transform:rotate(180deg)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                      <button id="factNext" type="button" aria-label="Next fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="camp-list">
+              <p class="lbl">How a session runs</p>
+              <ul>
+                <li><b>01</b> Find a problem worth solving</li>
+                <li><b>02</b> Build it cheap, test it fast</li>
+                <li><b>03</b> Pitch it to the room</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- The three stages, as a band. -->
+    <section class="band">
+      <ul class="container">
+        <li class="reveal"><span class="tile t-light">Find</span></li>
+        <li class="reveal"><span class="tile t-accent">Build</span></li>
+        <li class="reveal"><span class="tile t-dark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span></li>
+        <li class="reveal"><span class="tile t-ghost">Pitch</span></li>
+      </ul>
+    </section>
+
+    <!-- The program itself: what actually happens, each card going to the
+         page that covers it in full. -->
+    <section id="program">
+      <div class="container">
+        <div class="section-frame reveal">
+          <p class="meta">01 / The Program</p>
+          <div>
+            <h2>The High School Head Start Camp.</h2>
+            <p class="lead">An in-person camp for middle and early high school students in the Greater Austin area, designed and led by teens. No prior experience with business is expected.</p>
+          </div>
+        </div>
+
+        <div class="prog-grid">
+          <a class="prog-card reveal" href="programs.html">
+            <div class="prog-top"><span>Stage 01 / Find</span>
+              <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+            </div>
+            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-body">
+              <h3>Find a problem worth solving</h3>
+              <p>Sessions start by looking outward, not at spreadsheets: noticing a real, specific problem, instead of starting from an idea in search of one.</p>
+              <div class="prog-tags"><span>Looking outward</span><span>Validation</span></div>
+              <p class="prog-go">See the program <span aria-hidden="true">&rarr;</span></p>
+            </div>
+          </a>
+
+          <a class="prog-card reveal" href="programs.html">
+            <div class="prog-top"><span>Stage 02 / Build</span>
+              <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+            </div>
+            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-body">
+              <h3>Build it cheap, test it fast</h3>
+              <p>A rough answer in front of real people, quickly — alongside the money side: what it would cost, what it might charge, whether the maths survives contact with reality.</p>
+              <div class="prog-tags"><span>Prototyping</span><span>Budgeting</span></div>
+              <p class="prog-go">See the program <span aria-hidden="true">&rarr;</span></p>
+            </div>
+          </a>
+
+          <a class="prog-card reveal" href="programs.html">
+            <div class="prog-top"><span>Stage 03 / Pitch</span>
+              <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+            </div>
+            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-body">
+              <h3>Pitch it to the room</h3>
+              <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud — its own separate skill from having a good idea.</p>
+              <div class="prog-tags"><span>Presenting</span><span>Feedback</span></div>
+              <p class="prog-go">See the program <span aria-hidden="true">&rarr;</span></p>
+            </div>
+          </a>
+
+          <a class="prog-card reveal" href="why.html">
+            <div class="prog-top"><span>Why it works</span>
+              <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+            </div>
+            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-body">
+              <h3>Taught by people who just sat there</h3>
+              <p>The instructor at the front of the room was a middle schooler a few years ago, which changes the pace, the examples, and what students are willing to ask.</p>
+              <div class="prog-tags"><span>Peer-taught</span><span>Youth-led</span></div>
+              <p class="prog-go">Read the reasoning <span aria-hidden="true">&rarr;</span></p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real numbers only. -->
+    <section class="numbers">
+      <div class="container">
+        <div class="panel reveal">
+          <p class="meta" style="color:rgba(255,255,255,.5)">02 / By the numbers</p>
+          <h2>Two students started this. <em>Here is what that looks like.</em></h2>
+          <ul>
+            <li class="reveal"><div class="n"><span data-count-to="8">0</span>th</div><p class="l">Nationally, a co-founder's own result in a virtual entrepreneurship simulation</p></li>
+            <li class="reveal"><div class="n"><span data-count-to="650">0</span>+</div><p class="l">Teams that same simulation drew</p></li>
+            <li class="reveal"><div class="n"><span data-count-to="3">0</span></div><p class="l">Stages in every session, start to finish</p></li>
+            <li class="reveal"><div class="n"><span data-count-to="2">0</span></div><p class="l">Students who founded it and still run it</p></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Where to go next. -->
     <section id="sequence">
       <div class="container">
         <div class="section-frame reveal">
-          <p class="meta">Index</p>
-          <div>
-            <h2>Four parts, one idea.</h2>
-          </div>
+          <p class="meta">03 / Index</p>
+          <div><h2>Four parts, one idea.</h2></div>
         </div>
 
         <div class="index-list">
@@ -125,7 +255,7 @@
             <p class="meta index-num">03 / Founders</p>
             <div>
               <h3>Two students, running it themselves</h3>
-              <p>The people who founded Genesis and still teach it, with no adult board above them.</p>
+              <p>The people who founded Genesis and still run it, with no adult board above them.</p>
             </div>
             <p class="index-go">Meet them <span aria-hidden="true">&rarr;</span></p>
           </a>
