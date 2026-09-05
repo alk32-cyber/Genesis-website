@@ -17,7 +17,10 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="The Genesis Initiative — back to home">The <span class="accent">Genesis</span> Initiative</a>
+      <a class="brand" href="index.html" aria-label="The Genesis Initiative, back to home">
+        <img class="brand-mark" src="assets/logo.svg" alt="" width="40" height="40" />
+        <span class="brand-text">The <span class="accent">Genesis</span> Initiative</span>
+      </a>
 
       <nav class="nav-links" aria-label="Primary">
         <a href="why.html">Why</a>
@@ -64,20 +67,7 @@
         </div>
 
         <div class="wordmark-wrap" id="wordmarkWrap">
-          <svg class="wordmark" id="wordmarkSvg" viewBox="0 0 920 190" role="img" aria-label="Genesis">
-            <defs>
-              <pattern id="dotgrid" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
-                <circle cx="1.6" cy="1.6" r="1.35" fill="var(--accent)"/>
-              </pattern>
-              <!-- The SVG scales as a whole, so on a phone the fine pattern's
-                   dots land under one device pixel and the mark washes out to
-                   a grey smear. Same grid, fatter dots, swapped in by CSS. -->
-              <pattern id="dotgridBold" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
-                <circle cx="1.6" cy="1.6" r="2.35" fill="var(--accent)"/>
-              </pattern>
-            </defs>
-            <text x="460" y="150" text-anchor="middle" font-family="Lora, Georgia, serif" font-size="168" font-weight="600" fill="url(#dotgrid)">Genesis</text>
-          </svg>
+          <h1 class="wordmark">Genesis</h1>
         </div>
 
         <div class="hero-foot">
@@ -157,7 +147,7 @@
         </div>
 
         <div class="prog-grid" data-stagger>
-          <a class="prog-card reveal-3d" href="programs.html">
+          <a class="prog-card reveal-3d" href="programs.html#find">
             <div class="prog-top"><span>Stage 01 / Find</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
@@ -169,7 +159,7 @@
             </div>
           </a>
 
-          <a class="prog-card reveal-3d" href="programs.html">
+          <a class="prog-card reveal-3d" href="programs.html#build">
             <div class="prog-top"><span>Stage 02 / Build</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
@@ -181,7 +171,7 @@
             </div>
           </a>
 
-          <a class="prog-card reveal-3d" href="programs.html">
+          <a class="prog-card reveal-3d" href="programs.html#pitch">
             <div class="prog-top"><span>Stage 03 / Pitch</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
@@ -225,49 +215,93 @@
       </div>
     </section>
 
-    <!-- Where to go next. -->
+    <!-- Where to go next. Four destinations, each with its own drawn mark
+         rather than a number: the numbering said nothing the titles didn't. -->
     <section id="sequence">
       <div class="container">
         <div class="section-frame reveal">
-          <p class="meta">03 / Index</p>
+          <p class="meta">Index</p>
           <div><h2>Four parts, one idea.</h2></div>
         </div>
 
-        <div class="index-list" data-stagger>
-          <a class="index-row reveal" href="why.html">
-            <p class="meta index-num">01 / Why</p>
-            <div>
+        <div class="portal-grid" data-stagger>
+          <a class="portal reveal-3d" href="why.html">
+            <span class="portal-stage" aria-hidden="true">
+              <span class="portal-obj scene-obj">
+                <span class="portal-back"></span>
+                <span class="portal-motif"><svg viewBox="0 0 120 80" aria-hidden="true">
+              <rect class="m-dim" x="6"  y="52" width="18" height="22"/>
+              <rect class="m-dim" x="28" y="46" width="18" height="28"/>
+              <rect class="m-gap" x="50" y="18" width="18" height="56"/>
+              <rect class="m-dim" x="72" y="44" width="18" height="30"/>
+              <rect class="m-dim" x="94" y="50" width="18" height="24"/>
+            </svg></span>
+              </span>
+            </span>
+            <span class="portal-body">
+              <span class="portal-kicker">Why</span>
               <h3>The gap school leaves open</h3>
               <p>Most students meet entrepreneurship in a college elective, if at all. Genesis starts years earlier.</p>
-            </div>
-            <p class="index-go">Read the reasoning <span aria-hidden="true">&rarr;</span></p>
+              <span class="portal-go">Read the reasoning <span aria-hidden="true">&rarr;</span></span>
+            </span>
           </a>
 
-          <a class="index-row reveal" href="programs.html">
-            <p class="meta index-num">02 / Program</p>
-            <div>
+          <a class="portal reveal-3d" href="programs.html">
+            <span class="portal-stage" aria-hidden="true">
+              <span class="portal-obj scene-obj">
+                <span class="portal-back"></span>
+                <span class="portal-motif"><svg viewBox="0 0 120 80" aria-hidden="true">
+              <path class="m-dim"  d="M10 62h30v10H10z"/>
+              <path class="m-mid"  d="M45 40h30v32H45z"/>
+              <path class="m-lead" d="M80 16h30v56H80z"/>
+              <path class="m-rule" d="M10 72h100"/>
+            </svg></span>
+              </span>
+            </span>
+            <span class="portal-body">
+              <span class="portal-kicker">Program</span>
               <h3>From a real problem to a real pitch</h3>
               <p>What actually happens at the High School Head Start Camp, session by session.</p>
-            </div>
-            <p class="index-go">See the program <span aria-hidden="true">&rarr;</span></p>
+              <span class="portal-go">See the program <span aria-hidden="true">&rarr;</span></span>
+            </span>
           </a>
 
-          <a class="index-row reveal" href="founders.html">
-            <p class="meta index-num">03 / Founders</p>
-            <div>
+          <a class="portal reveal-3d" href="founders.html">
+            <span class="portal-stage" aria-hidden="true">
+              <span class="portal-obj scene-obj">
+                <span class="portal-back"></span>
+                <span class="portal-motif"><svg viewBox="0 0 120 80" aria-hidden="true">
+              <circle class="m-dim"  cx="46" cy="40" r="24"/>
+              <circle class="m-lead" cx="74" cy="40" r="24"/>
+            </svg></span>
+              </span>
+            </span>
+            <span class="portal-body">
+              <span class="portal-kicker">Founders</span>
               <h3>Two students, running it themselves</h3>
               <p>The people who founded Genesis and still run it, with no adult board above them.</p>
-            </div>
-            <p class="index-go">Meet them <span aria-hidden="true">&rarr;</span></p>
+              <span class="portal-go">Meet them <span aria-hidden="true">&rarr;</span></span>
+            </span>
           </a>
 
-          <a class="index-row reveal" href="involved.html">
-            <p class="meta index-num">04 / Involved</p>
-            <div>
+          <a class="portal reveal-3d" href="involved.html">
+            <span class="portal-stage" aria-hidden="true">
+              <span class="portal-obj scene-obj">
+                <span class="portal-back"></span>
+                <span class="portal-motif"><svg viewBox="0 0 120 80" aria-hidden="true">
+              <path class="m-rule" d="M12 16h40c10 0 16 8 16 24s6 24 16 24h24"/>
+              <path class="m-rule" d="M12 40h40"/>
+              <path class="m-rule" d="M12 64h40c10 0 16-8 16-24s6-24 16-24h24"/>
+              <circle class="m-lead" cx="104" cy="40" r="7"/>
+            </svg></span>
+              </span>
+            </span>
+            <span class="portal-body">
+              <span class="portal-kicker">Involved</span>
               <h3>Three ways in</h3>
               <p>Enroll a student, partner with the team, or follow along for camp dates.</p>
-            </div>
-            <p class="index-go">Find your way in <span aria-hidden="true">&rarr;</span></p>
+              <span class="portal-go">Find your way in <span aria-hidden="true">&rarr;</span></span>
+            </span>
           </a>
         </div>
       </div>
@@ -287,7 +321,10 @@
   <footer class="site-footer">
     <div class="container">
       <div class="footer-grid">
-        <a class="footer-brand" href="index.html">The <span class="accent">Genesis</span> Initiative</a>
+        <a class="footer-brand" href="index.html">
+          <img class="brand-mark" src="assets/logo.svg" alt="" width="30" height="30" />
+          <span>The <span class="accent">Genesis</span> Initiative</span>
+        </a>
         <div class="footer-links">
           <a href="why.html">Why</a>
           <a href="programs.html">Programs</a>

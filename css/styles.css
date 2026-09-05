@@ -152,16 +152,13 @@ button { font: inherit; cursor: pointer; }
   .wordmark-wrap { padding-inline: 0; }
 }
 
-/* Below roughly 760px the fine dot pattern renders sub-pixel and the mark
-   fades to grey, so swap in the bolder dots. `fill` is a real CSS property
-   on SVG, unlike the pattern's own geometry attributes. */
-@media (max-width: 760px) {
-  .wordmark text { fill: url(#dotgridBold); }
-}
 
 /* Anchor-jump offset: without this, clicking a nav link lands the section's
    top exactly under the sticky 78px header instead of below it. */
 main section[id] { scroll-margin-top: 92px; }
+/* Stage anchors inside the pinned sequence need the same offset, and a bit
+   more so the stage beside them is on screen when you land. */
+.pinned-step[id] { scroll-margin-top: 148px; }
 
 section { padding-block: var(--sp-9); position: relative; }
 
@@ -315,11 +312,37 @@ section { padding-block: var(--sp-9); position: relative; }
 .nav { display: flex; align-items: center; justify-content: space-between; height: 78px; }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.15rem;
   color: var(--ink);
   letter-spacing: -0.01em;
+}
+
+/* The mark leads the wordmark and lifts slightly on hover - the only
+   movement in the header, so it reads as one gesture. */
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: block;
+  transition: transform 320ms var(--ease-out-quint);
+}
+.brand:hover .brand-mark { transform: translateY(-2px) scale(1.04); }
+
+.footer-brand .brand-mark { width: 30px; height: 30px; }
+
+/* Below the mobile breakpoint the mark carries the brand on its own. */
+@media (max-width: 460px) {
+  .brand-text { display: none; }
+  .brand-mark { width: 32px; height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand:hover .brand-mark { transform: none; }
 }
 
 .brand .accent { color: var(--accent); }
@@ -455,10 +478,19 @@ section { padding-block: var(--sp-9); position: relative; }
   perspective: 1200px;
 }
 
+/* The mark is set type now, not a dot pattern. Sized in vw so it fills the
+   hero's width the way the drawn version did, capped so it stops growing on
+   very wide screens. */
 .wordmark {
-  width: 100%;
   display: block;
-  height: auto;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(3.6rem, 15.2vw, 13rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  text-align: center;
+  color: var(--ink);
   transform-origin: 50% 70%;
   transform:
     translate3d(0, calc(var(--wm-y, 0) * 1px), 0)
@@ -740,6 +772,9 @@ section { padding-block: var(--sp-9); position: relative; }
 }
 
 .footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
@@ -1331,83 +1366,125 @@ section { padding-block: var(--sp-9); position: relative; }
        Vertical only - the row is the link, and hovering moves the whole row
        rather than lighting up a button inside a card. --- */
 
-.index-list { border-top: 1px solid var(--ink); }
+/* --- Index portals: four destinations, each with its own drawn mark. The
+       old version numbered the rows 01-04, which added a sequence the site
+       does not actually have - you can enter at any of the four. --- */
 
-.index-row {
-  position: relative;
+.portal-grid {
   display: grid;
-  grid-template-columns: 8rem 1fr auto;
-  gap: var(--sp-6);
-  align-items: baseline;
-  padding-block: var(--sp-7);
-  border-bottom: 1px solid var(--line);
-  transition: background-color 260ms var(--ease-out-quint);
-  /* Scroll progress for this row, 0 -> 1 as it rises to the middle of the
-     viewport. Defaults to 1 so the row is complete with no JS. */
-  --row-p: 1;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  perspective: 1400px;
+}
+@media (min-width: 760px) { .portal-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.portal {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  padding: var(--sp-5);
+  transition: border-color 300ms var(--ease-out-quint),
+              background-color 300ms var(--ease-out-quint),
+              box-shadow 300ms var(--ease-out-quint);
 }
 
-/* The accent rule draws itself along the row's bottom edge as the row
-   arrives. Scale on a pseudo-element, so nothing in the row shifts. */
-.index-row::after {
-  content: "";
+.portal:hover { border-color: var(--accent); background: #fff; box-shadow: var(--elevation-3); }
+
+/* The stage gives the mark its own depth context, so the plate inside can
+   turn on scroll without dragging the card's text around with it. */
+.portal-stage {
+  display: grid;
+  place-items: center;
+  min-height: 9.5rem;
+  perspective: 900px;
+  margin-bottom: var(--sp-5);
+}
+
+.portal-obj {
+  position: relative;
+  width: min(15rem, 78%);
+  aspect-ratio: 3 / 2;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--rx, 10) * 0.55deg)) rotateY(calc(var(--ry, -14) * 0.55deg));
+  will-change: transform;
+}
+
+/* Back plate: the depth behind the mark. */
+.portal-back {
   position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(var(--row-p));
-  transform-origin: 0 50%;
+  inset: 0;
+  /* Slightly larger than the front plate so it frames it on every side
+     rather than peeking out of one edge as the object turns. */
+  transform: translateZ(-34px) scale(1.07);
+  background:
+    radial-gradient(circle at center, rgba(26,86,219,.30) 1.2px, transparent 1.3px) 0 0 / 14px 14px,
+    var(--bg-raised-2);
+  border: 1px solid rgba(26,86,219,.18);
+  backface-visibility: hidden;
 }
 
-/* The number leads the row in, tracking the same progress. */
-.index-row .index-num {
-  opacity: calc(0.35 + var(--row-p) * 0.65);
-  transform: translateY(calc((1 - var(--row-p)) * 10px));
+/* Front plate: glass, carrying the drawn mark. */
+.portal-motif {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform: translateZ(26px);
+  padding: var(--sp-4);
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--line);
+  box-shadow: var(--elevation-3);
+  backdrop-filter: blur(var(--blur-amount));
+  backface-visibility: hidden;
 }
 
-.index-row:hover { background: var(--accent-soft); }
+.portal-motif svg { width: 100%; height: auto; display: block; overflow: visible; }
 
-.index-row h3 {
-  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+/* One shared vocabulary for every mark: dim mass, mid mass, lead accent. */
+.portal-motif .m-dim  { fill: rgba(15,31,56,.16); }
+.portal-motif .m-mid  { fill: rgba(15,31,56,.34); }
+.portal-motif .m-lead { fill: var(--accent); }
+.portal-motif .m-gap  { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
+.portal-motif .m-rule { fill: none; stroke: rgba(15,31,56,.30); stroke-width: 2; stroke-linecap: round; }
+
+.portal:hover .m-dim { fill: rgba(15,31,56,.22); }
+
+.portal-body { display: flex; flex-direction: column; }
+
+.portal-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--size-meta);
+  letter-spacing: var(--track-meta);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.portal h3 {
+  font-size: clamp(1.25rem, 1.05rem + 0.7vw, 1.7rem);
   line-height: var(--lh-tight);
-  letter-spacing: -0.03em;
-  margin-bottom: var(--sp-3);
-  transition: transform 320ms var(--ease-out-quint);
+  letter-spacing: -0.025em;
+  margin-block: var(--sp-3) var(--sp-3);
+  transition: color 260ms var(--ease-out-quint);
 }
+.portal:hover h3 { color: var(--accent); }
 
-/* The title leads, the rest of the row follows it. */
-.index-row:hover h3 { transform: translateX(10px); }
+.portal p { font-size: var(--size-small); color: var(--ink-soft); }
 
-.index-row p { font-size: var(--size-small); max-width: 52ch; }
-.index-row .index-num { transition: color 260ms var(--ease-out-quint); }
-@media (prefers-reduced-motion: reduce) {
-  .index-row { --row-p: 1 !important; }
-  .index-row .index-num { opacity: 1; transform: none; }
-}
-.index-row:hover .index-num { color: var(--accent); }
-
-.index-go {
+.portal-go {
+  margin-top: var(--sp-5);
   font-family: var(--font-mono);
   font-size: var(--size-meta);
   letter-spacing: var(--track-meta);
   text-transform: uppercase;
   color: var(--accent);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
 }
+.portal-go span { display: inline-block; transition: transform 260ms var(--ease-out-quint); }
+.portal:hover .portal-go span { transform: translateX(8px); }
 
-.index-go span { transition: transform 260ms var(--ease-out-quint); }
-.index-row:hover .index-go span { transform: translateX(8px); }
-
-@media (max-width: 760px) {
-  .index-row { grid-template-columns: 1fr; gap: var(--sp-3); padding-block: var(--sp-6); }
-  .index-row:hover h3 { transform: none; }
-  .index-row p { max-width: none; }
+@media (prefers-reduced-motion: reduce) {
+  .portal-obj { transform: none !important; will-change: auto; }
 }
-
-/* --- Pinned story: the visual holds while the steps advance past it. --- */
 
 .pinned { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-9); }
 
@@ -1429,7 +1506,10 @@ section { padding-block: var(--sp-9); position: relative; }
   place-items: center;
   position: relative;
   overflow: hidden;
-  background: var(--bg-raised);
+  background:
+    radial-gradient(circle at center, rgba(26,86,219,.16) 1.1px, transparent 1.2px) 0 0 / 16px 16px,
+    var(--bg-raised);
+  perspective: 900px;
 }
 
 /* Each stage frame is a numeral drawn large; the active one is opaque.
@@ -1446,14 +1526,22 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .pinned-frame.is-active { opacity: 1; transform: none; }
 
-.pinned-frame span {
-  font-family: var(--font-display);
-  font-size: clamp(5rem, 3rem + 10vw, 11rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
-  color: var(--accent);
-  opacity: 0.16;
+/* Each stage gets a drawn plate instead of a bare numeral. The numeral was
+   decoration that repeated the "Stage 0N" caption right beneath it. */
+.frame-art {
+  display: block;
+  width: min(16rem, 62%);
+  transform: translateZ(26px) rotateX(calc(var(--stage-rx, 0) * 1deg));
+  transform-origin: 50% 60%;
 }
+.frame-art svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.pinned-frame .f-dim  { fill: rgba(15,31,56,.14); }
+.pinned-frame .f-mid  { fill: rgba(15,31,56,.30); }
+.pinned-frame .f-lead { fill: var(--accent); }
+.pinned-frame .f-ring { fill: none; stroke: rgba(15,31,56,.22); stroke-width: 2; }
+.pinned-frame .f-ring-2 { stroke: rgba(26,86,219,.42); stroke-dasharray: 6 5; }
+.pinned-frame .f-rule { fill: none; stroke: rgba(15,31,56,.28); stroke-width: 2; stroke-linecap: round; }
 
 .pinned-frame em {
   position: absolute;
@@ -1484,6 +1572,7 @@ section { padding-block: var(--sp-9); position: relative; }
 @media (prefers-reduced-motion: reduce) {
   .pinned-step { opacity: 1; }
   .pinned-frame { transition: none; }
+  .frame-art { transform: none !important; }
 }
 
 /* --- Closing statement: the page ends on a real note, not a link row. --- */
@@ -1811,12 +1900,23 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
   backdrop-filter:blur(var(--blur-amount));
 }
 
-/* The front plane carries a label so the object means something. */
+/* The front plane carries a drawn mark plus a label, so the object says what
+   it is instead of being an abstract stack of planes. */
+.scene-obj .p4{ display:grid; place-items:center; padding:var(--sp-5) }
+
+.plane-art{ width:76%; height:auto; display:block; overflow:visible }
+.plane-art .m-dim  { fill:rgba(15,31,56,.16) }
+.plane-art .m-mid  { fill:rgba(15,31,56,.34) }
+.plane-art .m-lead { fill:var(--accent) }
+.plane-art .m-gap  { fill:none; stroke:var(--accent); stroke-width:2.4; stroke-dasharray:5 4 }
+.plane-art .m-rule { fill:none; stroke:rgba(15,31,56,.30); stroke-width:2.4; stroke-linecap:round }
+
 .scene-obj .p4::after{
   content:attr(data-label);
   position:absolute;
-  left:50%; top:50%;
-  transform:translate(-50%,-50%);
+  left:50%; bottom:var(--sp-4);
+  transform:translateX(-50%);
+  white-space:nowrap;
   font-family:var(--font-mono);
   font-size:var(--size-meta);
   letter-spacing:var(--track-meta);

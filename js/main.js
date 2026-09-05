@@ -197,18 +197,8 @@
   // back and recedes as the hero scrolls away.
   var wordmarkWrap = document.getElementById("wordmarkWrap");
 
-  // Index rows: each row's accent rule draws itself as the row crosses the
-  // middle of the viewport.
-  var indexRows = Array.prototype.slice.call(document.querySelectorAll(".index-row"));
-
-  // Rules default to fully drawn so the rows read correctly with no JS and
-  // under reduced motion; only when the effect will actually run do they
-  // start retracted.
-  if (!prefersReducedMotion) {
-    indexRows.forEach(function (row) { row.style.setProperty("--row-p", "0"); });
-  }
-
   // Pinned story: the steps light up in turn while the stage holds.
+  var pinnedVisual = document.querySelector(".pinned-visual");
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
   var pinnedFrames = Array.prototype.slice.call(document.querySelectorAll(".pinned-frame"));
   var lastPinnedIndex = -1;
@@ -286,18 +276,6 @@
       }
     }
 
-    // --- Index rows ------------------------------------------------------
-    // 0 as the row enters the lower half, 1 once it has reached the middle.
-    if (indexRows.length && !prefersReducedMotion) {
-      var vhI = window.innerHeight;
-      for (var ir = 0; ir < indexRows.length; ir++) {
-        var irr = indexRows[ir].getBoundingClientRect();
-        if (irr.bottom < -80 || irr.top > vhI + 80) continue; // offscreen: skip
-        var p = (vhI * 0.85 - irr.top) / (vhI * 0.45);
-        indexRows[ir].style.setProperty("--row-p", Math.max(0, Math.min(1, p)).toFixed(3));
-      }
-    }
-
     // Anything that ended up above the viewport without the observer catching
     // it (fast fling, anchor jump) is revealed here rather than left blank.
     if (revealEls.length) {
@@ -312,9 +290,19 @@
     }
 
     // --- Pinned story -----------------------------------------------------
-    // Whichever step is nearest the middle of the viewport is the active one.
+    // The active step is the one nearest the middle of the STAGE, not the
+    // middle of the viewport. The stage is sticky at 22vh, so its centre and
+    // the viewport's centre are ~60px apart, and before it sticks they are
+    // further apart still - measuring against the viewport made the big
+    // numeral change while the reader was still on the previous step.
+    // Measuring against the stage keeps the numeral and the text beside it
+    // in step by construction, stuck or not.
     if (pinnedSteps.length) {
       var mid = window.innerHeight * 0.5;
+      if (pinnedVisual) {
+        var vr = pinnedVisual.getBoundingClientRect();
+        if (vr.height) mid = vr.top + vr.height / 2;
+      }
       var best = 0;
       var bestDist = Infinity;
       for (var s = 0; s < pinnedSteps.length; s++) {
@@ -322,6 +310,16 @@
         var d = Math.abs(r.top + r.height / 2 - mid);
         if (d < bestDist) { bestDist = d; best = s; }
       }
+      // The active plate tips with the stage's own travel, so the visual has
+      // scroll-linked depth rather than only cross-fading.
+      if (pinnedVisual && !prefersReducedMotion) {
+        var pv = pinnedVisual.getBoundingClientRect();
+        var pt = (window.innerHeight / 2 - (pv.top + pv.height / 2)) /
+                 (window.innerHeight / 2 + pv.height / 2);
+        pinnedVisual.style.setProperty("--stage-rx",
+          (Math.max(-1, Math.min(1, pt)) * -9).toFixed(2));
+      }
+
       if (best !== lastPinnedIndex) {
         lastPinnedIndex = best;
         for (var t = 0; t < pinnedSteps.length; t++) {

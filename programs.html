@@ -17,7 +17,10 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="index.html" aria-label="The Genesis Initiative — back to home">The <span class="accent">Genesis</span> Initiative</a>
+      <a class="brand" href="index.html" aria-label="The Genesis Initiative, back to home">
+        <img class="brand-mark" src="assets/logo.svg" alt="" width="40" height="40" />
+        <span class="brand-text">The <span class="accent">Genesis</span> Initiative</span>
+      </a>
 
       <nav class="nav-links" aria-label="Primary">
         <a href="why.html">Why</a>
@@ -61,7 +64,12 @@
         <div class="scene" aria-hidden="true">
           <div class="scene-obj">
             <span class="plane p1"></span><span class="plane p2"></span>
-            <span class="plane p3"></span><span class="plane p4" data-label="Head Start Camp"></span>
+            <span class="plane p3"></span><span class="plane p4" data-label="Head Start Camp"><svg class="plane-art" viewBox="0 0 120 70" aria-hidden="true">
+                <rect class="m-dim"  x="10" y="46" width="26" height="18"/>
+                <rect class="m-mid"  x="42" y="30" width="26" height="34"/>
+                <rect class="m-lead" x="74" y="12" width="26" height="52"/>
+                <path class="m-rule" d="M8 64h104"/>
+              </svg></span>
           </div>
         </div>
 
@@ -112,24 +120,54 @@
         <div class="pinned">
           <div class="pinned-visual">
             <div class="pinned-stage" aria-hidden="true">
-              <div class="pinned-frame is-active"><span>01</span><em>Find the problem</em></div>
-              <div class="pinned-frame"><span>02</span><em>Build it cheap, test it fast</em></div>
-              <div class="pinned-frame"><span>03</span><em>Pitch it to the room</em></div>
+              <div class="pinned-frame is-active">
+                <span class="frame-art">
+                  <svg viewBox="0 0 160 120">
+                    <circle class="f-ring" cx="80" cy="58" r="40"/>
+                    <circle class="f-ring f-ring-2" cx="80" cy="58" r="27"/>
+                    <circle class="f-lead" cx="80" cy="58" r="7"/>
+                    <path class="f-rule" d="M80 8v12M80 96v12M20 58h12M128 58h12"/>
+                  </svg>
+                </span>
+                <em>Stage 01 / Find the problem</em>
+              </div>
+              <div class="pinned-frame">
+                <span class="frame-art">
+                  <svg viewBox="0 0 160 120">
+                    <rect class="f-dim"  x="26" y="70" width="34" height="30"/>
+                    <rect class="f-mid"  x="63" y="52" width="34" height="48"/>
+                    <rect class="f-lead" x="100" y="34" width="34" height="66"/>
+                    <path class="f-rule" d="M20 100h120"/>
+                  </svg>
+                </span>
+                <em>Stage 02 / Build it cheap, test it fast</em>
+              </div>
+              <div class="pinned-frame">
+                <span class="frame-art">
+                  <svg viewBox="0 0 160 120">
+                    <path class="f-rule" d="M36 96h88"/>
+                    <path class="f-mid" d="M80 30 96 62H64Z"/>
+                    <rect class="f-lead" x="74" y="60" width="12" height="36"/>
+                    <path class="f-rule" d="M44 46 34 36M116 46l10-10M80 22V10"/>
+                  </svg>
+                </span>
+                <em>Stage 03 / Pitch it to the room</em>
+              </div>
             </div>
           </div>
 
           <div class="pinned-steps">
-            <article class="pinned-step is-active">
+            <article class="pinned-step is-active" id="find">
               <p class="meta">Stage 01</p>
               <h3>Find something worth solving</h3>
               <p>Early sessions are spent looking outward before looking at spreadsheets: noticing a real, specific problem worth paying attention to, rather than starting from a business idea in search of a problem.</p>
             </article>
-            <article class="pinned-step section-3d">
+            <article class="pinned-step section-3d" id="build">
               <p class="meta">Stage 02</p>
               <h3>Build it cheap, test it fast</h3>
               <p>Once a problem is real, the group sketches a rough answer to it and gets it in front of people quickly, alongside the money side: what it would cost, what it might charge, whether the math survives contact with reality.</p>
             </article>
-            <article class="pinned-step section-3d">
+            <article class="pinned-step section-3d" id="pitch">
               <p class="meta">Stage 03</p>
               <h3>Pitch it to the room</h3>
               <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud, in front of people, which is its own separate skill from having a good idea in the first place.</p>
@@ -198,7 +236,10 @@
   <footer class="site-footer">
     <div class="container">
       <div class="footer-grid">
-        <a class="footer-brand" href="index.html">The <span class="accent">Genesis</span> Initiative</a>
+        <a class="footer-brand" href="index.html">
+          <img class="brand-mark" src="assets/logo.svg" alt="" width="30" height="30" />
+          <span>The <span class="accent">Genesis</span> Initiative</span>
+        </a>
         <div class="footer-links">
           <a href="why.html">Why</a>
           <a href="programs.html">Programs</a>
