@@ -1543,7 +1543,10 @@ section { padding-block: var(--sp-9); position: relative; }
 .pinned-frame .f-ring-2 { stroke: rgba(26,86,219,.42); stroke-dasharray: 6 5; }
 .pinned-frame .f-rule { fill: none; stroke: rgba(15,31,56,.28); stroke-width: 2; stroke-linecap: round; }
 
-.pinned-frame em {
+/* One caption for the whole stage, not one per frame. The frames cross-fade,
+   which is right for the drawn plates but superimposed two full sentences on
+   top of each other for the length of every transition. */
+.pinned-caption {
   position: absolute;
   bottom: var(--sp-6);
   left: var(--sp-6);
@@ -1554,6 +1557,12 @@ section { padding-block: var(--sp-9); position: relative; }
   letter-spacing: var(--track-meta);
   text-transform: uppercase;
   color: var(--ink-faint);
+  transition: opacity 190ms var(--ease-out-quint);
+}
+.pinned-caption.is-swapping { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pinned-caption { transition: none; }
 }
 
 .pinned-steps { display: flex; flex-direction: column; }

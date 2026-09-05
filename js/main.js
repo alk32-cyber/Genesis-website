@@ -203,6 +203,8 @@
 
   // Pinned story: the steps light up in turn while the stage holds.
   var pinnedVisual = document.querySelector(".pinned-visual");
+  var pinnedCaption = document.getElementById("pinnedCaption");
+  var captionTimer = null;
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
   var pinnedFrames = Array.prototype.slice.call(document.querySelectorAll(".pinned-frame"));
   var lastPinnedIndex = -1;
@@ -344,6 +346,25 @@
         for (var f = 0; f < pinnedFrames.length; f++) {
           pinnedFrames[f].classList.toggle("is-active", f === best);
         }
+
+        // The caption is a single element whose text is swapped, so two
+        // captions are never on screen at once. Fade out, swap, fade back.
+        if (pinnedCaption) {
+          var nextCaption = pinnedFrames[best] &&
+                            pinnedFrames[best].getAttribute("data-caption");
+          if (nextCaption && nextCaption !== pinnedCaption.textContent) {
+            if (prefersReducedMotion) {
+              pinnedCaption.textContent = nextCaption;
+            } else {
+              clearTimeout(captionTimer);
+              pinnedCaption.classList.add("is-swapping");
+              captionTimer = setTimeout(function () {
+                pinnedCaption.textContent = nextCaption;
+                pinnedCaption.classList.remove("is-swapping");
+              }, 190);
+            }
+          }
+        }
       }
     }
   }
@@ -381,7 +402,7 @@
     var ctx = brush.getContext("2d");
     if (!ctx) return;
 
-    var BRUSH_RADIUS = 96, DECAY = 0.016, IDLE_FRAMES = 120;
+    var BRUSH_RADIUS = 45, DECAY = 0.016, IDLE_FRAMES = 120;
     var radius = BRUSH_RADIUS * dpr;
     var cover = document.createElement("canvas");
     var stampC = document.createElement("canvas");
