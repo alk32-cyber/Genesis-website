@@ -85,6 +85,21 @@
   // in from, so nothing is ever hidden waiting on JS at first paint.
   var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal, .reveal-3d, .section-3d"));
 
+  // Staggered groups: a [data-stagger] container hands each revealing child an
+  // index, and CSS turns that into a transition-delay so a grid arrives in
+  // sequence rather than all at once. Capped at 8 steps - past that the tail
+  // of the group is still animating long after the reader has moved on.
+  document.querySelectorAll("[data-stagger]").forEach(function (group) {
+    var step = 0;
+    Array.prototype.forEach.call(group.children, function (child) {
+      if (!child.classList.contains("reveal") &&
+          !child.classList.contains("reveal-3d") &&
+          !child.classList.contains("section-3d")) return;
+      child.style.setProperty("--i", Math.min(step, 7));
+      step++;
+    });
+  });
+
   if (!prefersReducedMotion && "IntersectionObserver" in window) {
     var vh = window.innerHeight;
     revealEls.forEach(function (el) {
@@ -157,9 +172,8 @@
   // Consolidated scroll pass. Everything that needs to know "how far down
   // the page / through the hero are we" reads from the same rAF-batched tick
   // instead of each registering its own scroll listener and re-measuring
-  // layout independently. `heroProgress` is exposed via closure to the
-  // wordmark particle system below, so its scroll-driven "explode" effect
-  // shares this one measurement too.
+  // layout independently. `heroProgress` is exposed via closure so the hero's
+  // depth layers all share this one measurement.
   // ==========================================================================
 
   var siteHeader = document.querySelector(".site-header");
@@ -171,6 +185,28 @@
   // through the viewport, so scrolling turns the object rather than just
   // sliding it. Small angle range keeps it readable, per the motion rules.
   var scenes = Array.prototype.slice.call(document.querySelectorAll(".scene-obj"));
+
+  // Layered vertical drift: decorative elements only. Each carries a
+  // [data-drift] factor and travels at its own rate as it crosses the
+  // viewport, so a section resolves in depth instead of arriving flat.
+  // Body copy is never in this set - the motion rules are explicit that
+  // running text must not be parallaxed.
+  var driftEls = Array.prototype.slice.call(document.querySelectorAll("[data-drift]"));
+
+  // The mark itself, now that the particle field is gone: it lifts, tilts
+  // back and recedes as the hero scrolls away.
+  var wordmarkWrap = document.getElementById("wordmarkWrap");
+
+  // Index rows: each row's accent rule draws itself as the row crosses the
+  // middle of the viewport.
+  var indexRows = Array.prototype.slice.call(document.querySelectorAll(".index-row"));
+
+  // Rules default to fully drawn so the rows read correctly with no JS and
+  // under reduced motion; only when the effect will actually run do they
+  // start retracted.
+  if (!prefersReducedMotion) {
+    indexRows.forEach(function (row) { row.style.setProperty("--row-p", "0"); });
+  }
 
   // Pinned story: the steps light up in turn while the stage holds.
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
@@ -212,6 +248,14 @@
           heroFadeEls[i].style.transform = "translateY(" + fadeShift + "px)";
         }
       }
+
+      // The mark tips back and recedes on its own axis - the depth cue the
+      // hero used to get from the particle field.
+      if (wordmarkWrap) {
+        wordmarkWrap.style.setProperty("--wm-y", (heroProgress * -34).toFixed(1));
+        wordmarkWrap.style.setProperty("--wm-rx", (heroProgress * 13).toFixed(2));
+        wordmarkWrap.style.setProperty("--wm-scale", (1 - heroProgress * 0.09).toFixed(4));
+      }
     }
 
     // --- 3D scenes -------------------------------------------------------
@@ -225,6 +269,32 @@
         t = Math.max(-1, Math.min(1, t));
         scenes[s].style.setProperty("--rx", (14 + t * 16).toFixed(2));
         scenes[s].style.setProperty("--ry", (-22 + t * 30).toFixed(2));
+      }
+    }
+
+    // --- Layered drift ---------------------------------------------------
+    if (driftEls.length && !prefersReducedMotion) {
+      var vhD = window.innerHeight;
+      for (var d = 0; d < driftEls.length; d++) {
+        var dr = driftEls[d].getBoundingClientRect();
+        if (dr.bottom < -160 || dr.top > vhD + 160) continue; // offscreen: skip
+        // -1 entering from below .. 1 leaving past the top.
+        var dt = (vhD / 2 - (dr.top + dr.height / 2)) / (vhD / 2 + dr.height / 2);
+        dt = Math.max(-1, Math.min(1, dt));
+        var factor = parseFloat(driftEls[d].getAttribute("data-drift")) || 0;
+        driftEls[d].style.setProperty("--drift", (dt * factor * -30).toFixed(1) + "px");
+      }
+    }
+
+    // --- Index rows ------------------------------------------------------
+    // 0 as the row enters the lower half, 1 once it has reached the middle.
+    if (indexRows.length && !prefersReducedMotion) {
+      var vhI = window.innerHeight;
+      for (var ir = 0; ir < indexRows.length; ir++) {
+        var irr = indexRows[ir].getBoundingClientRect();
+        if (irr.bottom < -80 || irr.top > vhI + 80) continue; // offscreen: skip
+        var p = (vhI * 0.85 - irr.top) / (vhI * 0.45);
+        indexRows[ir].style.setProperty("--row-p", Math.max(0, Math.min(1, p)).toFixed(3));
       }
     }
 
@@ -279,246 +349,6 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onScroll, { passive: true });
   updateScrollDerived();
-
-  // The interactive wordmark: renders "Genesis" as a field of dot particles
-  // on canvas, then lets the mouse repel them and the scroll position spread
-  // them apart. Falls back to the static SVG dot-matrix (already in the DOM)
-  // when JS, canvas, or reduced-motion rules it out.
-  (function initWordmark() {
-    var wrap = document.getElementById("wordmarkWrap");
-    var svgFallback = document.getElementById("wordmarkSvg");
-    if (!wrap || prefersReducedMotion) return;
-
-    var canvas = document.createElement("canvas");
-    canvas.className = "wordmark-canvas";
-    canvas.setAttribute("aria-hidden", "true");
-    var ctx = canvas.getContext && canvas.getContext("2d");
-    if (!ctx) return;
-
-    wrap.appendChild(canvas);
-    if (svgFallback) svgFallback.style.display = "none";
-
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var particles = [];
-    var mouse = { x: -9999, y: -9999, active: false };
-    var explodeCurrent = 0;
-    var visible = true;
-    var dotRadius = 1.5;
-    var accentColor = "#4fc3ff";
-
-    function readAccent() {
-      var v = getComputedStyle(document.documentElement).getPropertyValue("--accent");
-      if (v && v.trim()) accentColor = v.trim();
-    }
-
-    function buildParticles() {
-      var rect = wrap.getBoundingClientRect();
-      var w = Math.max(rect.width, 260);
-      var h = w * (190 / 920);
-
-      canvas.style.width = w + "px";
-      canvas.style.height = h + "px";
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-
-      var off = document.createElement("canvas");
-      off.width = canvas.width;
-      off.height = canvas.height;
-      var octx = off.getContext("2d");
-      octx.fillStyle = "#fff";
-      octx.textAlign = "center";
-      octx.textBaseline = "middle";
-      var fontSize = off.height * 0.86;
-      octx.font = "600 " + fontSize + "px Lora, Georgia, serif";
-      octx.fillText("Genesis", off.width / 2, off.height * 0.56);
-
-      var data = octx.getImageData(0, 0, off.width, off.height).data;
-      var step = Math.min(14, Math.max(4, Math.round(canvas.width / 190)));
-      dotRadius = Math.max(1.1, step * 0.26);
-
-      var pts = [];
-      for (var y = 0; y < off.height; y += step) {
-        for (var x = 0; x < off.width; x += step) {
-          if (data[(y * off.width + x) * 4 + 3] > 120) {
-            pts.push({
-              ox: x, oy: y, x: x, y: y, vx: 0, vy: 0,
-              // Per-particle phase/speed so the idle drift below isn't
-              // every dot breathing in perfect unison.
-              seed: Math.random() * Math.PI * 2,
-              speed: 0.5 + Math.random() * 0.7
-            });
-          }
-        }
-      }
-      particles = pts;
-    }
-
-    function frame() {
-      requestAnimationFrame(frame);
-      if (!visible || !particles.length) return;
-
-      // Smoothly chase the scroll-driven target (shared with the consolidated
-      // scroll pass above) instead of snapping straight to it every frame -
-      // this is what makes the scatter feel liquid rather than mechanically
-      // locked to the scroll position.
-      explodeCurrent += (heroProgress - explodeCurrent) * 0.09;
-
-      var rect = canvas.getBoundingClientRect();
-      var mx = (mouse.x - rect.left) * dpr;
-      var my = (mouse.y - rect.top) * dpr;
-      var repelRadius = 130 * dpr;
-      var explode = explodeCurrent;
-      var cx = canvas.width / 2;
-      var cy = canvas.height / 2;
-      var t = performance.now() * 0.001;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = accentColor;
-
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        var tx = p.ox;
-        var ty = p.oy;
-
-        if (explode > 0.001) {
-          tx += (p.ox - cx) * explode * 0.6;
-          ty += (p.oy - cy) * explode * 0.6 - explode * 46 * dpr;
-        }
-
-        // A slow, per-particle idle drift so the wordmark is never
-        // perfectly still even before anyone touches it.
-        tx += Math.sin(t * p.speed + p.seed) * 3.2 * dpr;
-        ty += Math.cos(t * p.speed * 0.85 + p.seed) * 3.2 * dpr;
-
-        if (mouse.active) {
-          var dx = p.x - mx;
-          var dy = p.y - my;
-          var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          if (dist < repelRadius) {
-            var force = (repelRadius - dist) / repelRadius;
-            p.vx += (dx / dist) * force * 3.6;
-            p.vy += (dy / dist) * force * 3.6;
-          }
-        }
-
-        // Loose spring, generous inertia: a low pull-back constant and high
-        // damping retention read as fluid, slow-settling drift rather than
-        // a snap back to place.
-        p.vx += (tx - p.x) * 0.012;
-        p.vy += (ty - p.y) * 0.012;
-        p.vx *= 0.945;
-        p.vy *= 0.945;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        ctx.globalAlpha = Math.max(0, 1 - explode * 0.75);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    if (hasFinePointer) {
-      wrap.addEventListener("mousemove", function (e) {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        mouse.active = true;
-      });
-      wrap.addEventListener("mouseleave", function () {
-        mouse.active = false;
-      });
-    }
-
-    // Shared burst impulse - dots within radius get shoved outward from
-    // (cx, cy) in canvas-local pixel space, then drift back on their own
-    // through the same loose spring used everywhere else. Used by both a
-    // direct click/tap and the "genesis" easter egg below.
-    function burst(cx, cy, radius, strength) {
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        var dx = p.x - cx;
-        var dy = p.y - cy;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        if (dist < radius) {
-          var force = (radius - dist) / radius;
-          p.vx += (dx / dist) * force * strength;
-          p.vy += (dy / dist) * force * strength;
-        }
-      }
-    }
-
-    // Click (or tap) to give the dots a playful shove outward from that point.
-    canvas.addEventListener("click", function (e) {
-      var rect = canvas.getBoundingClientRect();
-      burst((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr, 210 * dpr, 15);
-    });
-
-    // Secret phrase: type "genesis" anywhere on the page for a bigger burst
-    // radiating out from the middle of the wordmark, plus a toast. A rolling
-    // buffer of the last few keys typed, compared case-insensitively.
-    var typedBuffer = "";
-    document.addEventListener("keydown", function (e) {
-      if (e.key.length !== 1) return; // ignore Shift, Enter, arrow keys, etc.
-      var tag = e.target && e.target.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
-      typedBuffer = (typedBuffer + e.key).slice(-7).toLowerCase();
-      if (typedBuffer === "genesis") {
-        burst(canvas.width / 2, canvas.height / 2, canvas.width * 0.7, 22);
-        showToast("You found it. Genesis mode: activated.");
-        typedBuffer = "";
-      }
-    });
-
-    var resizeTimer;
-    window.addEventListener("resize", function () {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(buildParticles, 200);
-    });
-
-    if ("IntersectionObserver" in window && hero) {
-      new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          visible = entry.isIntersecting;
-        });
-      }).observe(hero);
-    }
-
-    readAccent();
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(buildParticles);
-    } else {
-      buildParticles();
-    }
-    requestAnimationFrame(frame);
-    // Page transitions: internal links fade the page out before navigating, so
-  // moving between the five pages reads as one continuous site. The navigation
-  // is what actually matters, so it is scheduled on a timer that fires whether
-  // or not the transition finishes, and modified clicks (new tab, download,
-  // external) are left entirely alone.
-  if (!prefersReducedMotion) {
-    document.addEventListener("click", function (e) {
-      var link = e.target.closest && e.target.closest("a");
-      if (!link) return;
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      if (link.target === "_blank" || link.hasAttribute("download")) return;
-
-      var href = link.getAttribute("href");
-      if (!href || href.charAt(0) === "#" || /^[a-z]+:/i.test(href)) return;
-      if (link.origin !== window.location.origin) return;
-      if (link.pathname === window.location.pathname) return;
-
-      e.preventDefault();
-      document.body.classList.add("is-leaving");
-      setTimeout(function () { window.location.href = link.href; }, 180);
-    });
-
-    // Coming back via the back button restores a faded-out page from the
-    // bfcache, so clear the class on show.
-    window.addEventListener("pageshow", function () {
-      document.body.classList.remove("is-leaving");
-    });
-  }
   // ==========================================================================
   // Liquid reveal (home hero). A soft radial brush stamps a second field over
   // the base along the pointer trail, and the trail decays every frame.
@@ -537,14 +367,14 @@
     var ctx = brush.getContext("2d");
     if (!ctx) return;
 
-    var BRUSH_RADIUS = 143, DECAY = 0.016, IDLE_FRAMES = 120;
+    var BRUSH_RADIUS = 96, DECAY = 0.016, IDLE_FRAMES = 120;
     var radius = BRUSH_RADIUS * dpr;
     var cover = document.createElement("canvas");
     var stampC = document.createElement("canvas");
     var points = [], last = null, idle = 0, W = 0, H = 0;
 
     // Gradient ground plus a jittered grid of dots - the same motif as the
-    // wordmark, so the revealed layer belongs to the same brand.
+    // Genesis mark, so the revealed layer belongs to the same brand.
     function paintField(canvas, o){
       var g = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
       var grad = g.createLinearGradient(0, 0, w, h);
@@ -711,7 +541,6 @@
     });
   })();
 
-})();
 
   // Magnetic buttons + card tilt: fine pointer only, and skipped entirely
   // under reduced motion (continuous mouse-driven movement is exactly what

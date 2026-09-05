@@ -69,6 +69,12 @@
               <pattern id="dotgrid" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
                 <circle cx="1.6" cy="1.6" r="1.35" fill="var(--accent)"/>
               </pattern>
+              <!-- The SVG scales as a whole, so on a phone the fine pattern's
+                   dots land under one device pixel and the mark washes out to
+                   a grey smear. Same grid, fatter dots, swapped in by CSS. -->
+              <pattern id="dotgridBold" width="6.5" height="6.5" patternUnits="userSpaceOnUse">
+                <circle cx="1.6" cy="1.6" r="2.35" fill="var(--accent)"/>
+              </pattern>
             </defs>
             <text x="460" y="150" text-anchor="middle" font-family="Lora, Georgia, serif" font-size="168" font-weight="600" fill="url(#dotgrid)">Genesis</text>
           </svg>
@@ -128,13 +134,13 @@
 
     <!-- The three stages, as a band. -->
     <section class="band">
-      <ul class="container">
-        <li class="reveal"><span class="tile t-light">Find</span></li>
-        <li class="reveal"><span class="tile t-accent">Build</span></li>
-        <li class="reveal"><span class="tile t-dark" aria-hidden="true">
+      <ul class="container" data-stagger>
+        <li class="reveal"><span class="tile t-light" data-drift="0.35">Find</span></li>
+        <li class="reveal"><span class="tile t-accent" data-drift="0.95">Build</span></li>
+        <li class="reveal"><span class="tile t-dark" aria-hidden="true" data-drift="0.55">
           <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </span></li>
-        <li class="reveal"><span class="tile t-ghost">Pitch</span></li>
+        <li class="reveal"><span class="tile t-ghost" data-drift="1.15">Pitch</span></li>
       </ul>
     </section>
 
@@ -150,12 +156,12 @@
           </div>
         </div>
 
-        <div class="prog-grid">
+        <div class="prog-grid" data-stagger>
           <a class="prog-card reveal-3d" href="programs.html">
             <div class="prog-top"><span>Stage 01 / Find</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
-            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-mark" aria-hidden="true" data-drift="0.5"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
             <div class="prog-body">
               <h3>Find a problem worth solving</h3>
               <p>Sessions start by looking outward, not at spreadsheets: noticing a real, specific problem, instead of starting from an idea in search of one.</p>
@@ -167,10 +173,10 @@
             <div class="prog-top"><span>Stage 02 / Build</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
-            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-mark" aria-hidden="true" data-drift="0.9"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
             <div class="prog-body">
               <h3>Build it cheap, test it fast</h3>
-              <p>A rough answer in front of real people, quickly — alongside the money side: what it would cost, what it might charge, whether the maths survives contact with reality.</p>
+              <p>A rough answer in front of real people, quickly, alongside the money side: what it would cost, what it might charge, whether the math survives contact with reality.</p>
               <div class="prog-tags"><span>Prototyping</span><span>Budgeting</span></div>
             </div>
           </a>
@@ -179,10 +185,10 @@
             <div class="prog-top"><span>Stage 03 / Pitch</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
-            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-mark" aria-hidden="true" data-drift="0.35"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
             <div class="prog-body">
               <h3>Pitch it to the room</h3>
-              <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud — its own separate skill from having a good idea.</p>
+              <p>Every camp ends with students presenting what they built to the group and to teen mentors, out loud. Standing up and saying it is its own skill, separate from having a good idea.</p>
               <div class="prog-tags"><span>Presenting</span><span>Feedback</span></div>
             </div>
           </a>
@@ -191,7 +197,7 @@
             <div class="prog-top"><span>Why it works</span>
               <span class="prog-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
             </div>
-            <div class="prog-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
+            <div class="prog-mark" aria-hidden="true" data-drift="0.75"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 13.9 9.1 21 11 13.9 12.9 12 20 10.1 12.9 3 11 10.1 9.1Z"/></svg></div>
             <div class="prog-body">
               <h3>Taught by people who just sat there</h3>
               <p>The instructor at the front of the room was a middle schooler a few years ago, which changes the pace, the examples, and what students are willing to ask.</p>
@@ -209,7 +215,7 @@
         <div class="panel reveal-3d">
           <p class="meta" style="color:rgba(255,255,255,.5)">02 / By the numbers</p>
           <h2>Two students started this. <em>Here is what that looks like.</em></h2>
-          <ul>
+          <ul data-stagger>
             <li class="reveal"><div class="n"><span data-count-to="8">0</span>th</div><p class="l">Nationally, a co-founder's own result in a virtual entrepreneurship simulation</p></li>
             <li class="reveal"><div class="n"><span data-count-to="650">0</span>+</div><p class="l">Teams that same simulation drew</p></li>
             <li class="reveal"><div class="n"><span data-count-to="3">0</span></div><p class="l">Stages in every session, start to finish</p></li>
@@ -227,7 +233,7 @@
           <div><h2>Four parts, one idea.</h2></div>
         </div>
 
-        <div class="index-list">
+        <div class="index-list" data-stagger>
           <a class="index-row reveal" href="why.html">
             <p class="meta index-num">01 / Why</p>
             <div>

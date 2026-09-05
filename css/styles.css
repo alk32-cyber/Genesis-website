@@ -152,6 +152,13 @@ button { font: inherit; cursor: pointer; }
   .wordmark-wrap { padding-inline: 0; }
 }
 
+/* Below roughly 760px the fine dot pattern renders sub-pixel and the mark
+   fades to grey, so swap in the bolder dots. `fill` is a real CSS property
+   on SVG, unlike the pattern's own geometry attributes. */
+@media (max-width: 760px) {
+  .wordmark text { fill: url(#dotgridBold); }
+}
+
 /* Anchor-jump offset: without this, clicking a nav link lands the section's
    top exactly under the sticky 78px header instead of below it. */
 main section[id] { scroll-margin-top: 92px; }
@@ -434,22 +441,30 @@ section { padding-block: var(--sp-9); position: relative; }
 .hero .eyebrow { justify-content: center; }
 .hero .eyebrow::before { display: none; }
 
-/* Full-bleed wordmark: breaks out of the hero's text column so it can run
-   much wider than the copy above and below it (roughly +75% over the old
-   1040px-constrained version), capped for very wide screens. */
+/* The wordmark still breaks out of the hero's text column, but is pulled in
+   from full-bleed so it reads as a mark rather than a stretched banner. */
 .wordmark-wrap {
-  width: 100vw;
-  max-width: 1900px;
+  width: min(100vw, 1360px);
   margin-left: 50%;
   transform: translateX(-50%);
   padding-inline: var(--sp-5);
   box-sizing: border-box;
   position: relative;
   margin-block: var(--sp-3) 0;
+  /* Scroll-linked depth, driven by --wm-* in the consolidated scroll pass. */
+  perspective: 1200px;
 }
 
-.wordmark, .wordmark-canvas { width: 100%; display: block; height: auto; }
-.wordmark-canvas { touch-action: pan-y; cursor: pointer; }
+.wordmark {
+  width: 100%;
+  display: block;
+  height: auto;
+  transform-origin: 50% 70%;
+  transform:
+    translate3d(0, calc(var(--wm-y, 0) * 1px), 0)
+    rotateX(calc(var(--wm-rx, 0) * 1deg))
+    scale(var(--wm-scale, 1));
+}
 
 /* "Next page" link at the foot of each page's content - keeps the site
    feeling like one continuous story even though each stop is a real,
@@ -1319,6 +1334,7 @@ section { padding-block: var(--sp-9); position: relative; }
 .index-list { border-top: 1px solid var(--ink); }
 
 .index-row {
+  position: relative;
   display: grid;
   grid-template-columns: 8rem 1fr auto;
   gap: var(--sp-6);
@@ -1326,6 +1342,27 @@ section { padding-block: var(--sp-9); position: relative; }
   padding-block: var(--sp-7);
   border-bottom: 1px solid var(--line);
   transition: background-color 260ms var(--ease-out-quint);
+  /* Scroll progress for this row, 0 -> 1 as it rises to the middle of the
+     viewport. Defaults to 1 so the row is complete with no JS. */
+  --row-p: 1;
+}
+
+/* The accent rule draws itself along the row's bottom edge as the row
+   arrives. Scale on a pseudo-element, so nothing in the row shifts. */
+.index-row::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(var(--row-p));
+  transform-origin: 0 50%;
+}
+
+/* The number leads the row in, tracking the same progress. */
+.index-row .index-num {
+  opacity: calc(0.35 + var(--row-p) * 0.65);
+  transform: translateY(calc((1 - var(--row-p)) * 10px));
 }
 
 .index-row:hover { background: var(--accent-soft); }
@@ -1343,6 +1380,10 @@ section { padding-block: var(--sp-9); position: relative; }
 
 .index-row p { font-size: var(--size-small); max-width: 52ch; }
 .index-row .index-num { transition: color 260ms var(--ease-out-quint); }
+@media (prefers-reduced-motion: reduce) {
+  .index-row { --row-p: 1 !important; }
+  .index-row .index-num { opacity: 1; transform: none; }
+}
 .index-row:hover .index-num { color: var(--accent); }
 
 .index-go {
@@ -1574,13 +1615,16 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .band .tile{
   display:grid; place-items:center; height:5.5rem; width:100%; border-radius:var(--radius-pill);
   font-family:var(--font-display); font-size:1.6rem; font-weight:500;
+  /* --drift comes from the scroll pass, --hover from the rule below, so the
+     two can compose instead of one clobbering the other. */
+  transform:translate3d(0,var(--drift,0px),0) scale(var(--hover,1));
   transition:transform 260ms var(--ease-out-quint);
 }
 .band .t-light { background:var(--bg-raised); color:var(--ink) }
 .band .t-accent{ background:linear-gradient(to bottom right,var(--accent-bright),var(--accent-dim)); color:#fff }
 .band .t-dark  { background:var(--ink); color:#fff }
 .band .t-ghost { background:var(--bg-raised); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line) }
-.band li:hover .tile{ transform:scale(1.025) }
+.band li:hover .tile{ --hover:1.025 }
 @media (min-width:760px){
   .band ul{ flex-direction:row; gap:1rem }
   .band .tile{ height:8.5rem; font-size:2rem }
@@ -1610,7 +1654,10 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .prog-card:hover .prog-badge{ transform:rotate(45deg); background:var(--accent) }
 .prog-badge svg{ width:16px; height:16px }
 .prog-mark{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none }
-.prog-mark svg{ width:5rem; height:5rem; color:rgba(255,255,255,.06) }
+.prog-mark svg{
+  width:5rem; height:5rem; color:rgba(255,255,255,.06);
+  transform:translate3d(0,var(--drift,0px),0);
+}
 .prog-body{ position:relative; margin-top:auto }
 .prog-card h3{ font-size:1.45rem; font-weight:600; letter-spacing:-.02em; color:#fff }
 .prog-card p{ margin-top:.6rem; max-width:34ch; font-size:.9rem; color:rgba(255,255,255,.62) }
@@ -1675,11 +1722,17 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 }
 .reveal-3d.is-visible{ opacity:1; transform:none }
 
-/* Stagger so four cards read as one gesture, not four competing ones. */
-.prog-grid .reveal-3d:nth-child(1){ transition-delay:0ms }
-.prog-grid .reveal-3d:nth-child(2){ transition-delay:90ms }
-.prog-grid .reveal-3d:nth-child(3){ transition-delay:180ms }
-.prog-grid .reveal-3d:nth-child(4){ transition-delay:270ms }
+/* Stagger so a group reads as one gesture, not N competing ones. The index
+   comes from [data-stagger] in main.js and is capped at 8 steps, so the tail
+   of a long list is never still arriving after the reader has moved past. */
+[data-stagger] > .reveal,
+[data-stagger] > .reveal-3d,
+[data-stagger] > .section-3d{ transition-delay:calc(var(--i,0) * 80ms) }
+
+/* A transition reads its delay from the destination state, so the delay has
+   to stay on the revealed element. Cancel it on hover only, so pointer
+   feedback is never held back by an entrance offset. */
+[data-stagger] > :hover{ transition-delay:0ms }
 
 /* --- The one focal tilt target on the page (skill rule: 1-2 per screen).
        JS clamps the pull; CSS just supplies the depth context. --- */
@@ -1797,4 +1850,12 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 @media (prefers-reduced-motion: reduce){
   .scene-obj{ transform:rotateX(12deg) rotateY(-18deg) !important; will-change:auto }
   .section-3d, .section-3d.pending{ opacity:1 !important; transform:none !important }
+
+  /* Scroll-linked motion resolves to its readable end state. */
+  .wordmark{ transform:none !important }
+  .band .tile{ transform:scale(var(--hover,1)) !important }
+  .prog-mark svg{ transform:none !important }
+  [data-stagger] > .reveal,
+  [data-stagger] > .reveal-3d,
+  [data-stagger] > .section-3d{ transition-delay:0ms !important }
 }
