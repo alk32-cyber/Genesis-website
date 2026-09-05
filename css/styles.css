@@ -1561,8 +1561,8 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 }
 
 /* --- Band --- */
-.band{ background:var(--bg) }
-.band ul{ display:flex; flex-direction:column; gap:.75rem; padding-block:var(--sp-8) }
+.band{ background:var(--bg); padding-block:var(--sp-6) }
+.band ul{ display:flex; flex-direction:column; gap:.75rem; padding-block:var(--sp-6) }
 .band li{ flex:1 }
 .band .tile{
   display:grid; place-items:center; height:5.5rem; width:100%; border-radius:var(--radius-pill);
@@ -1640,3 +1640,59 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .numbers .l{ margin-top:.6rem; font-size:.85rem; color:rgba(255,255,255,.58) }
 @media (min-width:640px){ .numbers .panel{ padding:var(--sp-9) var(--sp-8) } }
 @media (min-width:1024px){ .numbers ul{ grid-template-columns:repeat(4,1fr) } }
+
+/* ==========================================================================
+   3D DEPTH + SCROLL CHOREOGRAPHY
+   Built to the ui-ux-pro-max rules rather than piling on effects:
+   parallax only on decorative layers (never body copy), small deltas,
+   one focal tilt target, and everything off under reduced motion.
+   The patterns come from the skill's GSAP presets; they are implemented on
+   the existing rAF scroll pass instead of adding GSAP, which would duplicate
+   scroll machinery this site already has.
+   ========================================================================== */
+
+/* --- Scroll-driven 3D entrance. The grid supplies the perspective so the
+       cards share one vanishing point instead of each having its own. --- */
+.prog-grid{ perspective:1400px; perspective-origin:50% 40% }
+
+.prog-card{ transform-style:preserve-3d; will-change:transform }
+
+/* The reveal system already handles "pending -> visible"; this variant just
+   swaps the flat rise for a rotation in depth. */
+.reveal-3d.pending{
+  opacity:0;
+  transform:perspective(1400px) rotateX(14deg) translate3d(0,34px,-90px);
+}
+.reveal-3d{
+  transition:opacity 620ms var(--ease-out-quint), transform 620ms var(--ease-out-quint);
+}
+.reveal-3d.is-visible{ opacity:1; transform:none }
+
+/* Stagger so four cards read as one gesture, not four competing ones. */
+.prog-grid .reveal-3d:nth-child(1){ transition-delay:0ms }
+.prog-grid .reveal-3d:nth-child(2){ transition-delay:90ms }
+.prog-grid .reveal-3d:nth-child(3){ transition-delay:180ms }
+.prog-grid .reveal-3d:nth-child(4){ transition-delay:270ms }
+
+/* --- The one focal tilt target on the page (skill rule: 1-2 per screen).
+       JS clamps the pull; CSS just supplies the depth context. --- */
+.factcard{ transform-style:preserve-3d; transition:transform 420ms var(--ease-out-quint) }
+.factcard-tile, .factcard-panel{ transform:translateZ(18px) }
+
+/* --- Numbers panel lifts out of the page as it arrives. --- */
+.numbers .panel.reveal-3d.pending{
+  transform:perspective(1600px) rotateX(9deg) translate3d(0,40px,-70px);
+}
+
+/* --- Hero depth layers. Only the generated canvases move; the copy above
+       them never does, per the parallax rule. --- */
+.liquid{ will-change:transform }
+
+@media (prefers-reduced-motion: reduce){
+  .reveal-3d, .reveal-3d.pending, .numbers .panel.reveal-3d.pending{
+    opacity:1 !important; transform:none !important;
+  }
+  .factcard{ transform:none !important }
+  .factcard-tile, .factcard-panel{ transform:none }
+  .liquid{ will-change:auto }
+}

@@ -83,7 +83,7 @@
   // Reveal-on-scroll: the page renders fully visible at rest. Only elements
   // that start below the first viewport get a "pending" state to animate
   // in from, so nothing is ever hidden waiting on JS at first paint.
-  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal, .reveal-3d"));
 
   if (!prefersReducedMotion && "IntersectionObserver" in window) {
     var vh = window.innerHeight;
@@ -165,6 +165,7 @@
   var siteHeader = document.querySelector(".site-header");
   var hero = document.getElementById("top");
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
+  var liquidLayer = document.querySelector(".liquid");
 
   // Pinned story: the steps light up in turn while the stage holds.
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
@@ -184,6 +185,19 @@
     if (hero && !prefersReducedMotion) {
       var rect = hero.getBoundingClientRect();
       heroProgress = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height * 0.65, 1)));
+
+      // Depth: the generated canvas field drifts slower than the copy in
+      // front of it. Decorative layer only - the skill's parallax rule is
+      // explicit that body copy must never be parallaxed.
+      if (liquidLayer) {
+        if (heroProgress > 0 && heroProgress < 1) {
+          liquidLayer.style.transform = "translate3d(0," + (heroProgress * 46).toFixed(1) + "px,0)";
+          liquidLayer.style.willChange = "transform";
+        } else if (liquidLayer.style.willChange) {
+          // Release GPU memory once the hero is parked at either end.
+          liquidLayer.style.willChange = "auto";
+        }
+      }
 
       if (heroFadeEls.length) {
         var fadeOpacity = Math.max(0, 1 - heroProgress * 1.15);
@@ -592,6 +606,39 @@
       if (drawing) { for (var i = 0; i < points.length; i++) stamp(points[i].x, points[i].y); points = []; }
       else if (idle === IDLE_FRAMES) ctx.clearRect(0, 0, W, H);
     })();
+  })();
+
+  // ==========================================================================
+  // Focal 3D tilt. The skill caps this at one or two targets per screen and
+  // says to clamp the pull so the element never leaves its own hit box, so
+  // this is the only tilt on the page and the rotation is held to 6 degrees.
+  // ==========================================================================
+  (function focalTilt(){
+    var card = document.querySelector(".factcard");
+    if (!card || prefersReducedMotion || !hasFinePointer) return;
+
+    var MAX_DEG = 6, raf = null, tx = 0, ty = 0;
+
+    function apply(){
+      raf = null;
+      card.style.transform =
+        "perspective(900px) rotateX(" + ty.toFixed(2) + "deg) rotateY(" + tx.toFixed(2) + "deg)";
+    }
+
+    card.addEventListener("pointermove", function (e) {
+      var r = card.getBoundingClientRect();
+      // Normalised -0.5..0.5, then clamped by MAX_DEG.
+      tx = ((e.clientX - r.left) / r.width - 0.5) * 2 * MAX_DEG;
+      ty = -((e.clientY - r.top) / r.height - 0.5) * 2 * MAX_DEG;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+
+    // Always reverse on leave, so the tilt can never stick.
+    card.addEventListener("pointerleave", function () {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      tx = ty = 0;
+      card.style.transform = "";
+    });
   })();
 
   // ==========================================================================
