@@ -83,7 +83,7 @@
   // Reveal-on-scroll: the page renders fully visible at rest. Only elements
   // that start below the first viewport get a "pending" state to animate
   // in from, so nothing is ever hidden waiting on JS at first paint.
-  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal, .reveal-3d"));
+  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".reveal, .reveal-3d, .section-3d"));
 
   if (!prefersReducedMotion && "IntersectionObserver" in window) {
     var vh = window.innerHeight;
@@ -167,6 +167,11 @@
   var heroFadeEls = Array.prototype.slice.call(document.querySelectorAll(".hero-fade"));
   var liquidLayer = document.querySelector(".liquid");
 
+  // 3D scenes: each object's rotation is tied to how far it has travelled
+  // through the viewport, so scrolling turns the object rather than just
+  // sliding it. Small angle range keeps it readable, per the motion rules.
+  var scenes = Array.prototype.slice.call(document.querySelectorAll(".scene-obj"));
+
   // Pinned story: the steps light up in turn while the stage holds.
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
   var pinnedFrames = Array.prototype.slice.call(document.querySelectorAll(".pinned-frame"));
@@ -206,6 +211,20 @@
           heroFadeEls[i].style.opacity = fadeOpacity;
           heroFadeEls[i].style.transform = "translateY(" + fadeShift + "px)";
         }
+      }
+    }
+
+    // --- 3D scenes -------------------------------------------------------
+    if (scenes.length && !prefersReducedMotion) {
+      var vhNow = window.innerHeight;
+      for (var s = 0; s < scenes.length; s++) {
+        var sr = scenes[s].getBoundingClientRect();
+        if (sr.bottom < -200 || sr.top > vhNow + 200) continue; // offscreen: skip
+        // -1 (below the fold) .. 1 (above it), 0 when centred.
+        var t = (vhNow / 2 - (sr.top + sr.height / 2)) / (vhNow / 2 + sr.height / 2);
+        t = Math.max(-1, Math.min(1, t));
+        scenes[s].style.setProperty("--rx", (14 + t * 16).toFixed(2));
+        scenes[s].style.setProperty("--ry", (-22 + t * 30).toFixed(2));
       }
     }
 

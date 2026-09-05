@@ -68,6 +68,14 @@
   --dur-base: 280ms;
 
   --container: 1160px;
+
+  /* Elevation scale from the ui-ux-pro-max "dimensional-layering" style,
+     retinted from pure black to the palette's navy. */
+  --elevation-1: 0 1px 3px rgba(15,31,56,.10);
+  --elevation-2: 0 4px 6px rgba(15,31,56,.10);
+  --elevation-3: 0 10px 20px rgba(15,31,56,.10);
+  --elevation-4: 0 20px 40px rgba(15,31,56,.15);
+  --blur-amount: 8px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -372,7 +380,6 @@ section { padding-block: var(--sp-9); position: relative; }
 @media (max-width: 860px) {
   .nav-links { display: none; }
   .nav-toggle { display: inline-flex; }
-  .nav-actions .btn-primary.desktop-only { display: none; }
 
   .mobile-panel {
     display: none;
@@ -1695,4 +1702,99 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
   .factcard{ transform:none !important }
   .factcard-tile, .factcard-panel{ transform:none }
   .liquid{ will-change:auto }
+}
+
+/* ==========================================================================
+   3D SCENE — a real dimensional object, built from the brand's dot motif.
+   There is no photography for this site, so rather than fake a photo the
+   "3D image" is constructed: four dot-planes stacked in Z, rotated by scroll
+   position. Transform-only, so it composites on the GPU.
+   Follows the skill's dimensional-layering spec (z-depth, 4-level elevation,
+   translateZ, parallax) and its accessibility requirement that all of it
+   collapses under reduced motion.
+   ========================================================================== */
+
+.scene{
+  perspective:1000px;
+  perspective-origin:50% 45%;
+  display:grid;
+  place-items:center;
+  min-height:16rem;
+  pointer-events:none;
+}
+
+/* Standalone (not paired with a text column) it is a supporting visual,
+   so it sits smaller and closer to the content it introduces. */
+.container > .scene{ min-height:13rem; margin-block:var(--sp-5) var(--sp-6) }
+.container > .scene .scene-obj{ width:min(11rem,44vw) }
+
+.scene-obj{
+  position:relative;
+  width:min(15rem,60vw);
+  aspect-ratio:1;
+  transform-style:preserve-3d;
+  /* --rx/--ry are written by the scroll pass in main.js */
+  transform:rotateX(calc(var(--rx,14) * 1deg)) rotateY(calc(var(--ry,-22) * 1deg));
+  will-change:transform;
+}
+
+.scene-obj .plane{
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(26,86,219,.22);
+  background-image:radial-gradient(circle at center, rgba(26,86,219,.42) 1.3px, transparent 1.4px);
+  background-size:16px 16px;
+  backface-visibility:hidden;
+}
+
+/* Four layers: back plane faintest, front plane strongest and lifted. */
+.scene-obj .p1{ transform:translateZ(-72px); opacity:.30 }
+.scene-obj .p2{ transform:translateZ(-24px); opacity:.50 }
+.scene-obj .p3{ transform:translateZ( 24px); opacity:.72 }
+.scene-obj .p4{
+  transform:translateZ(72px); opacity:1;
+  background-color:rgba(255,255,255,.55);
+  box-shadow:var(--elevation-4);
+  backdrop-filter:blur(var(--blur-amount));
+}
+
+/* The front plane carries a label so the object means something. */
+.scene-obj .p4::after{
+  content:attr(data-label);
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  font-family:var(--font-mono);
+  font-size:var(--size-meta);
+  letter-spacing:var(--track-meta);
+  text-transform:uppercase;
+  color:var(--accent);
+  white-space:nowrap;
+}
+
+/* Elevation applied to the existing card family, so depth is systemic
+   rather than a one-off on the scene. */
+.prog-card{ box-shadow:var(--elevation-3), 0 0 0 1px rgba(255,255,255,.06) }
+.prog-card:hover{ box-shadow:var(--elevation-4), 0 0 0 1px rgba(255,255,255,.12) }
+.factcard{ box-shadow:var(--elevation-2), 0 0 0 1px rgba(226,232,242,.9) }
+.founder-card, .involve-card{ transition:box-shadow 280ms var(--ease-out-quint) }
+.founder-card:hover, .involve-card:hover{ box-shadow:var(--elevation-2) }
+
+/* Page sections lift in with depth on every page, not just home. */
+.section-3d.pending{
+  opacity:0;
+  transform:perspective(1400px) rotateX(8deg) translate3d(0,28px,-60px);
+}
+.section-3d{
+  transition:opacity 640ms var(--ease-out-quint), transform 640ms var(--ease-out-quint);
+}
+.section-3d.is-visible{ opacity:1; transform:none }
+
+/* Layout for pages that pair a scene with content. */
+.with-scene{ display:grid; grid-template-columns:1fr; gap:var(--sp-7); align-items:center }
+@media (min-width:900px){ .with-scene{ grid-template-columns:1fr minmax(18rem,22rem) } }
+
+@media (prefers-reduced-motion: reduce){
+  .scene-obj{ transform:rotateX(12deg) rotateY(-18deg) !important; will-change:auto }
+  .section-3d, .section-3d.pending{ opacity:1 !important; transform:none !important }
 }
