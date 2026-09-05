@@ -1761,7 +1761,7 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .factcard-item{
   grid-area:1 / 1;
   align-self:start;
-  transition:transform .5s var(--ease-out-quint), opacity .5s var(--ease-out-quint);
+  transition:transform 180ms var(--ease-out-quint), opacity 180ms var(--ease-out-quint);
 }
 .factcard-cap{
   font-family:var(--font-mono); font-size:.62rem; font-weight:500; text-transform:uppercase;

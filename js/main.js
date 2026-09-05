@@ -542,31 +542,59 @@
 
     dots.innerHTML = items.map(function (_, k) { return "<i" + (k === 0 ? ' class="on"' : "") + "></i>"; }).join("");
 
-    function render(idx, dir){
-      var item = items[idx];
-      var incoming = document.createElement("div");
-      incoming.className = "factcard-item";
-      incoming.innerHTML = '<p class="factcard-cap">' + item.cap + '</p>' +
-                           '<p class="factcard-ttl">' + item.ttl + '</p>';
-      if (!prefersReducedMotion) {
-        incoming.style.transform = "translateY(" + (dir > 0 ? 14 : -14) + "px)";
-        incoming.style.opacity = "0";
-      }
-      var outgoing = slot.querySelector(".factcard-item");
-      slot.appendChild(incoming);
-      requestAnimationFrame(function () {
-        incoming.style.transform = "none"; incoming.style.opacity = "1";
-        if (outgoing) {
-          outgoing.style.transform = "translateY(" + (dir > 0 ? -14 : 14) + "px)";
-          outgoing.style.opacity = "0";
-          setTimeout(function () { outgoing.remove(); }, 520);
-        }
+    // One element for the life of the carousel, with its text swapped while it
+    // is invisible. The previous version appended a fresh node per change and
+    // faded the old one out, but only ever looked up a SINGLE outgoing node
+    // via querySelector - so clicking faster than the 520ms cleanup orphaned
+    // every extra item at full opacity and stacked the text permanently.
+    // Measured: six clicks 70ms apart left five items in the DOM, all opaque.
+    var item = document.createElement("div");
+    item.className = "factcard-item";
+    slot.appendChild(item);
+
+    var swapTimer = null, pendingIdx = 0, pendingDir = 1;
+
+    function paint(idx){
+      var it = items[idx];
+      item.innerHTML = '<p class="factcard-cap">' + it.cap + '</p>' +
+                       '<p class="factcard-ttl">' + it.ttl + '</p>';
+    }
+
+    function markDots(idx){
+      Array.prototype.forEach.call(dots.children, function (d, k) {
+        d.classList.toggle("on", k === idx);
       });
-      Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle("on", k === idx); });
+    }
+
+    function render(idx, dir){
+      markDots(idx);                      // instant feedback, even mid-swap
+      if (prefersReducedMotion) { paint(idx); return; }
+
+      // A swap already in flight just retargets, rather than restarting the
+      // fade, so holding the button down still advances at a steady rhythm.
+      pendingIdx = idx; pendingDir = dir;
+      if (swapTimer) return;
+
+      item.style.transition = "";
+      item.style.transform = "translateY(" + (dir > 0 ? -10 : 10) + "px)";
+      item.style.opacity = "0";
+
+      swapTimer = setTimeout(function () {
+        swapTimer = null;
+        paint(pendingIdx);
+        // Jump to the far side with the transition off, commit that, then
+        // let it settle back in - otherwise it animates across the swap.
+        item.style.transition = "none";
+        item.style.transform = "translateY(" + (pendingDir > 0 ? 10 : -10) + "px)";
+        void item.offsetWidth;
+        item.style.transition = "";
+        item.style.transform = "none";
+        item.style.opacity = "1";
+      }, 180);
     }
 
     function move(step){ i = (i + step + items.length) % items.length; render(i, step); }
-    render(0, 1);
+    paint(0); markDots(0);
 
     document.getElementById("factNext").addEventListener("click", function (e) { e.stopPropagation(); move(1); });
     document.getElementById("factPrev").addEventListener("click", function (e) { e.stopPropagation(); move(-1); });
