@@ -197,6 +197,10 @@
   // back and recedes as the hero scrolls away.
   var wordmarkWrap = document.getElementById("wordmarkWrap");
 
+  // The spinning coin turns on its own axis in CSS; the scroll pass only
+  // tips it, so the two compose instead of fighting for the transform.
+  var coins = Array.prototype.slice.call(document.querySelectorAll(".coin"));
+
   // Pinned story: the steps light up in turn while the stage holds.
   var pinnedVisual = document.querySelector(".pinned-visual");
   var pinnedSteps = Array.prototype.slice.call(document.querySelectorAll(".pinned-step"));
@@ -259,6 +263,18 @@
         t = Math.max(-1, Math.min(1, t));
         scenes[s].style.setProperty("--rx", (14 + t * 16).toFixed(2));
         scenes[s].style.setProperty("--ry", (-22 + t * 30).toFixed(2));
+      }
+    }
+
+    // --- Spinning coin ---------------------------------------------------
+    if (coins.length && !prefersReducedMotion) {
+      var vhC = window.innerHeight;
+      for (var c = 0; c < coins.length; c++) {
+        var cr = coins[c].getBoundingClientRect();
+        if (cr.bottom < -150 || cr.top > vhC + 150) continue; // offscreen: skip
+        var ct = (vhC / 2 - (cr.top + cr.height / 2)) / (vhC / 2 + cr.height / 2);
+        ct = Math.max(-1, Math.min(1, ct));
+        coins[c].style.setProperty("--coin-rx", (ct * -22).toFixed(2));
       }
     }
 

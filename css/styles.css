@@ -329,9 +329,9 @@ section { padding-block: var(--sp-9); position: relative; }
   height: 40px;
   flex: none;
   display: block;
-  transition: transform 320ms var(--ease-out-quint);
+  transition: transform 900ms var(--ease-out-quint);
 }
-.brand:hover .brand-mark { transform: translateY(-2px) scale(1.04); }
+.brand:hover .brand-mark { transform: rotateY(360deg) scale(1.06); }
 
 .footer-brand .brand-mark { width: 30px; height: 30px; }
 
@@ -1575,6 +1575,97 @@ section { padding-block: var(--sp-9); position: relative; }
   .frame-art { transform: none !important; }
 }
 
+
+/* ==========================================================================
+   Spinning mark. A coin of the logo turning on its own axis, with the
+   scroll pass tipping the whole coin as it crosses the viewport, so it has
+   both continuous motion and scroll-linked depth. One per page.
+   ========================================================================== */
+
+.coin-band{ padding-block:var(--sp-7) }
+.coin-wrap{
+  display:grid;
+  place-items:center;
+  perspective:900px;
+  margin-block:var(--sp-7);
+}
+
+.coin{
+  width:min(14rem,52vw);
+  aspect-ratio:1;
+  transform-style:preserve-3d;
+  /* Tip driven from the consolidated scroll pass. */
+  transform:rotateX(calc(var(--coin-rx,0) * 1deg));
+}
+
+.coin-spin{
+  position:absolute; inset:0;
+  transform-style:preserve-3d;
+  animation:coin-turn 16s linear infinite;
+}
+
+.coin-face{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  border-radius:50%;
+  border:1px solid rgba(26,86,219,.22);
+  /* Near-opaque on purpose: at a translucent .72 the edge plane behind the
+     face showed straight through it as a blue seam down the middle of the
+     mark for part of every turn. */
+  background:
+    radial-gradient(circle at center, rgba(26,86,219,.14) 1.1px, transparent 1.2px) 0 0 / 15px 15px,
+    rgba(255,255,255,.985);
+  box-shadow:var(--elevation-3);
+  backface-visibility:hidden;
+}
+
+.coin-back{ transform:rotateY(180deg) }
+
+/* Without this the coin is two infinitely thin faces, so twice per rotation
+   it turns edge-on and the mark disappears entirely. The edge plane sits at
+   90deg to the faces, so it is face-on at exactly the moment they vanish. */
+.coin-edge{
+  position:absolute;
+  top:1%; bottom:1%; left:50%;
+  width:13px; margin-left:-6.5px;
+  transform:rotateY(90deg);
+  border-radius:50% / 8%;
+  background:linear-gradient(to bottom,
+    var(--accent-bright) 0%, var(--accent) 38%, var(--accent-dim) 100%);
+  opacity:0;
+  /* One flat plane cannot model a cylinder's rim: away from edge-on it
+     foreshortens ACROSS the face instead of around it, drawing a blue seam
+     through the mark. It is only wanted at the two moments the faces vanish,
+     so it fades in on the same 16s clock as the turn and is otherwise gone.
+     Same duration and start, so the two stay in step. */
+  animation:coin-edge-flash 16s linear infinite;
+}
+
+@keyframes coin-edge-flash{
+  0%, 20%   { opacity:0 }
+  25%       { opacity:1 }   /* 90deg: faces edge-on */
+  30%, 70%  { opacity:0 }
+  75%       { opacity:1 }   /* 270deg: faces edge-on again */
+  80%, 100% { opacity:0 }
+}
+.coin-face img{ width:64%; height:auto; display:block }
+
+/* The disc behind the coin gives it something to turn against. */
+.coin-halo{
+  position:absolute; inset:-9%;
+  border-radius:50%;
+  border:1px dashed rgba(26,86,219,.28);
+  transform:translateZ(-40px);
+}
+
+@keyframes coin-turn{ from{ transform:rotateY(0deg) } to{ transform:rotateY(360deg) } }
+
+@media (prefers-reduced-motion: reduce){
+  .coin-spin{ animation:none }
+  .coin-edge{ animation:none; opacity:0 }
+  .coin{ transform:none !important }
+}
+
 /* --- Closing statement: the page ends on a real note, not a link row. --- */
 
 .closing {
@@ -1653,9 +1744,14 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
   flex:1; border-radius:var(--radius-sm); background:rgba(238,243,250,.92); padding:.75rem;
   display:flex; flex-direction:column; justify-content:space-between;
 }
-.factcard-slot{ position:relative; min-height:4.5rem }
+/* Both facts occupy the same grid cell, so they still cross-fade on top of
+   each other but the slot grows to fit the tallest one. The old version
+   absolutely positioned them inside a fixed 4.5rem box, so any fact that ran
+   to three lines overflowed straight onto the dots and arrows below. */
+.factcard-slot{ display:grid; min-height:4.5rem }
 .factcard-item{
-  position:absolute; inset:0;
+  grid-area:1 / 1;
+  align-self:start;
   transition:transform .5s var(--ease-out-quint), opacity .5s var(--ease-out-quint);
 }
 .factcard-cap{
@@ -1663,7 +1759,7 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
   letter-spacing:.12em; color:var(--ink-faint);
 }
 .factcard-ttl{
-  margin-top:.35rem; max-width:18ch; font-family:var(--font-display); font-size:1rem;
+  margin-top:.35rem; max-width:24ch; font-family:var(--font-display); font-size:1rem;
   font-weight:600; line-height:1.3; color:var(--ink);
 }
 .factcard-bot{ display:flex; align-items:center; justify-content:space-between; margin-top:.75rem }
@@ -1701,6 +1797,15 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .band{ background:var(--bg); padding-block:var(--sp-6) }
 .band ul{ display:flex; flex-direction:column; gap:.75rem; padding-block:var(--sp-6) }
 .band li{ flex:1 }
+/* Connectors size to their glyph so the three stages stay equal width and
+   the last arrow reads as leading into Pitch rather than standing beside it. */
+.band .band-join{ flex:0 0 auto; display:grid; place-items:center }
+.join-arrow{
+  display:grid; place-items:center;
+  color:var(--ink-faint);
+  transform:translate3d(0,var(--drift,0px),0);
+}
+.join-arrow svg{ display:block }
 .band .tile{
   display:grid; place-items:center; height:5.5rem; width:100%; border-radius:var(--radius-pill);
   font-family:var(--font-display); font-size:1.6rem; font-weight:500;
@@ -1712,7 +1817,7 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
 .band .t-light { background:var(--bg-raised); color:var(--ink) }
 .band .t-accent{ background:linear-gradient(to bottom right,var(--accent-bright),var(--accent-dim)); color:#fff }
 .band .t-dark  { background:var(--ink); color:#fff }
-.band .t-ghost { background:var(--bg-raised); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line) }
+
 .band li:hover .tile{ --hover:1.025 }
 @media (min-width:760px){
   .band ul{ flex-direction:row; gap:1rem }
@@ -1954,6 +2059,7 @@ body.is-leaving { opacity: 0; transition: opacity 180ms var(--ease-in-out-cubic)
   /* Scroll-linked motion resolves to its readable end state. */
   .wordmark{ transform:none !important }
   .band .tile{ transform:scale(var(--hover,1)) !important }
+  .join-arrow{ transform:none !important }
   .prog-mark svg{ transform:none !important }
   [data-stagger] > .reveal,
   [data-stagger] > .reveal-3d,
